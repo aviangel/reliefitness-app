@@ -15,7 +15,7 @@ export default async function WeightPage() {
 
   const { data: history } = await supabase
     .from('weight_log')
-    .select('id, date, weight_kg, notes')
+    .select('id,date,weight_kg,notes')
     .eq('user_id', user.id)
     .order('date', { ascending: false })
     .limit(14);

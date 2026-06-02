@@ -17,13 +17,13 @@ export default async function StatsPage() {
     supabase.from('user_profile').select('calorie_goal').eq('user_id', user.id).single(),
     supabase
       .from('meals_log')
-      .select('date, calories')
+      .select('date,calories')
       .eq('user_id', user.id)
       .gte('date', weekStart)
       .lte('date', today),
     supabase
       .from('weight_log')
-      .select('date, weight_kg')
+      .select('date,weight_kg')
       .eq('user_id', user.id)
       .order('date', { ascending: false })
       .limit(7),

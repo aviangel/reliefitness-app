@@ -21,14 +21,14 @@ export default async function DashboardPage() {
   const [{ data: meals }, { data: profile }, { data: weightHistory }] = await Promise.all([
     supabase
       .from('meals_log')
-      .select('id, meal_type, food_name, portion_g, calories, protein_g, carbs_g, fat_g, status, logged_at')
+      .select('id,meal_type,food_name,portion_g,calories,protein_g,carbs_g,fat_g,status,logged_at')
       .eq('user_id', user.id)
       .eq('date', today)
       .order('logged_at'),
     supabase.from('user_profile').select('*').eq('user_id', user.id).single(),
     supabase
       .from('weight_log')
-      .select('weight_kg, date')
+      .select('weight_kg,date')
       .eq('user_id', user.id)
       .order('date', { ascending: false })
       .limit(2),
