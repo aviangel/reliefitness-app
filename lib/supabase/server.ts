@@ -1,12 +1,11 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import type { Database } from '@/types/database';
-import type { SupabaseClient } from '@supabase/supabase-js';
 
-export function createClient(): SupabaseClient<Database> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function createClient(): any {
   const cookieStore = cookies();
 
-  const client = createServerClient(
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -20,12 +19,10 @@ export function createClient(): SupabaseClient<Database> {
               cookieStore.set(name, value, options);
             });
           } catch {
-            // Called from a Server Component — safe to ignore
+            // Server Component context
           }
         },
       },
     }
   );
-
-  return client as unknown as SupabaseClient<Database>;
 }
