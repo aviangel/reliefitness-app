@@ -11,6 +11,8 @@ import { Scale, Plus, TrendingDown } from 'lucide-react';
 
 export const revalidate = 0;
 
+type WeightEntry = { weight_kg: number; date: string };
+
 export default async function DashboardPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -18,7 +20,7 @@ export default async function DashboardPage() {
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
-  const [{ data: meals }, { data: profile }, { data: weightHistory }] = await Promise.all([
+  const [mealsRes, profileRes, weightRes] = await Promise.all([
     supabase
       .from('meals_log')
       .select('id,meal_type,food_name,portion_g,calories,protein_g,carbs_g,fat_g,status,logged_at')
@@ -34,16 +36,19 @@ export default async function DashboardPage() {
       .limit(2),
   ]);
 
+  const allMeals = (mealsRes.data ?? []) as MealLogEntry[];
+  const profile = profileRes.data;
+  const weightHistory = weightRes.data as WeightEntry[] | null;
+
   const p = profile ?? DEFAULT_PROFILE;
-  const allMeals = (meals ?? []) as MealLogEntry[];
   const totalCalories = Math.round(allMeals.reduce((s, m) => s + (m.calories ?? 0), 0));
   const totalProtein = Math.round(allMeals.reduce((s, m) => s + (m.protein_g ?? 0), 0) * 10) / 10;
   const totalCarbs = Math.round(allMeals.reduce((s, m) => s + (m.carbs_g ?? 0), 0) * 10) / 10;
   const totalFat = Math.round(allMeals.reduce((s, m) => s + (m.fat_g ?? 0), 0) * 10) / 10;
 
   const currentWeight = weightHistory?.[0]?.weight_kg ?? p.current_weight_kg;
-  const kgToGo = Math.max(0, Number(currentWeight) - p.target_weight_kg);
-  const totalLoss = p.current_weight_kg - p.target_weight_kg;
+  const kgToGo = Math.max(0, Number(currentWeight) - Number(p.target_weight_kg));
+  const totalLoss = Number(p.current_weight_kg) - Number(p.target_weight_kg);
   const goalProgress = totalLoss > 0 ? Math.min(100, Math.max(0, (1 - kgToGo / totalLoss) * 100)) : 0;
   const todayHasWeight = weightHistory?.[0]?.date === today;
 
@@ -70,11 +75,11 @@ export default async function DashboardPage() {
       </div>
 
       <div className="bg-card rounded-3xl border border-border p-5 flex flex-col items-center gap-5">
-        <CalorieRing calories={totalCalories} goal={p.calorie_goal} />
+        <CalorieRing calories={totalCalories} goal={Number(p.calorie_goal)} />
         <MacrosBars
-          protein={totalProtein} proteinGoal={p.protein_goal_g}
-          carbs={totalCarbs} carbsGoal={p.carbs_goal_g}
-          fat={totalFat} fatGoal={p.fat_goal_g}
+          protein={totalProtein} proteinGoal={Number(p.protein_goal_g)}
+          carbs={totalCarbs} carbsGoal={Number(p.carbs_goal_g)}
+          fat={totalFat} fatGoal={Number(p.fat_goal_g)}
         />
       </div>
 
@@ -93,7 +98,7 @@ export default async function DashboardPage() {
           />
         </div>
         <div className="flex justify-between text-xs text-muted-foreground mt-1.5">
-          <span>Target: {p.target_weight_kg} kg</span>
+          <span>Target: {Number(p.target_weight_kg)} kg</span>
           <span>Now: {Number(currentWeight).toFixed(1)} kg</span>
         </div>
       </div>

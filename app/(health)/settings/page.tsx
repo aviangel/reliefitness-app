@@ -5,17 +5,27 @@ import { SettingsForm } from '@/components/health/SettingsForm';
 
 export const revalidate = 0;
 
+type ProfileRow = {
+  calorie_goal: number;
+  protein_goal_g: number;
+  carbs_goal_g: number;
+  fat_goal_g: number;
+  current_weight_kg: number;
+  target_weight_kg: number;
+};
+
 export default async function SettingsPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: profile } = await supabase
+  const { data: profileRaw } = await supabase
     .from('user_profile')
     .select('*')
     .eq('user_id', user.id)
     .single();
 
+  const profile = profileRaw as ProfileRow | null;
   const p = profile ?? DEFAULT_PROFILE;
 
   return (
@@ -25,10 +35,10 @@ export default async function SettingsPage() {
         <p className="text-sm text-muted-foreground">Goals &amp; preferences</p>
       </div>
       <SettingsForm
-        calorieGoal={p.calorie_goal}
-        proteinGoal={p.protein_goal_g}
-        carbsGoal={p.carbs_goal_g}
-        fatGoal={p.fat_goal_g}
+        calorieGoal={Number(p.calorie_goal)}
+        proteinGoal={Number(p.protein_goal_g)}
+        carbsGoal={Number(p.carbs_goal_g)}
+        fatGoal={Number(p.fat_goal_g)}
         currentWeight={Number(p.current_weight_kg)}
         targetWeight={Number(p.target_weight_kg)}
         userId={user.id}

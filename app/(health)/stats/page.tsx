@@ -5,6 +5,9 @@ import { BarChart2 } from 'lucide-react';
 
 export const revalidate = 0;
 
+type MealCalEntry = { date: string; calories: number | null };
+type WeightEntry = { date: string; weight_kg: number };
+
 export default async function StatsPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -13,7 +16,7 @@ export default async function StatsPage() {
   const today = format(new Date(), 'yyyy-MM-dd');
   const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 0 }), 'yyyy-MM-dd');
 
-  const [{ data: profile }, { data: weekMeals }, { data: weightHistory }] = await Promise.all([
+  const [profileRes, weekMealsRes, weightRes] = await Promise.all([
     supabase.from('user_profile').select('calorie_goal').eq('user_id', user.id).single(),
     supabase
       .from('meals_log')
@@ -28,6 +31,10 @@ export default async function StatsPage() {
       .order('date', { ascending: false })
       .limit(7),
   ]);
+
+  const profile = profileRes.data as { calorie_goal: number } | null;
+  const weekMeals = weekMealsRes.data as MealCalEntry[] | null;
+  const weightHistory = weightRes.data as WeightEntry[] | null;
 
   const calorieGoal = profile?.calorie_goal ?? 2000;
   const dayTotals: Record<string, number> = {};

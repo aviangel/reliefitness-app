@@ -6,6 +6,8 @@ import { TrendingDown, TrendingUp, Minus } from 'lucide-react';
 
 export const revalidate = 0;
 
+type WeightEntry = { id: string; date: string; weight_kg: number; notes: string | null };
+
 export default async function WeightPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -13,18 +15,20 @@ export default async function WeightPage() {
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
-  const { data: history } = await supabase
+  const { data: historyRaw } = await supabase
     .from('weight_log')
     .select('id,date,weight_kg,notes')
     .eq('user_id', user.id)
     .order('date', { ascending: false })
     .limit(14);
 
-  const entries = history ?? [];
+  const entries = (historyRaw ?? []) as WeightEntry[];
   const todayEntry = entries.find(e => e.date === today);
   const latestWeight = entries[0]?.weight_kg;
   const prevWeight = entries[1]?.weight_kg;
-  const delta = latestWeight && prevWeight ? Number(latestWeight) - Number(prevWeight) : null;
+  const delta = latestWeight != null && prevWeight != null
+    ? Number(latestWeight) - Number(prevWeight)
+    : null;
 
   return (
     <div>
@@ -64,7 +68,7 @@ export default async function WeightPage() {
             <div className="bg-card rounded-2xl border border-border overflow-hidden">
               {entries.map((entry, i) => {
                 const prev = entries[i + 1];
-                const diff = prev ? Number(entry.weight_kg) - Number(prev.weight_kg) : null;
+                const diff = prev != null ? Number(entry.weight_kg) - Number(prev.weight_kg) : null;
                 return (
                   <div key={entry.id} className="flex items-center justify-between px-4 py-3.5 border-b border-border/50 last:border-0">
                     <div>
