@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { findFood } from './foods';
 
 export async function logMeal(formData: FormData) {
-  const supabase = createClient();
+  const supabase = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
@@ -38,7 +38,7 @@ export async function logMeal(formData: FormData) {
 }
 
 export async function deleteMealLog(id: string) {
-  const supabase = createClient();
+  const supabase = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
@@ -48,7 +48,7 @@ export async function deleteMealLog(id: string) {
 }
 
 export async function logWeight(weight: number, notes?: string) {
-  const supabase = createClient();
+  const supabase = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
@@ -64,7 +64,7 @@ export async function logWeight(weight: number, notes?: string) {
 }
 
 export async function logSlip(what: string, why?: string) {
-  const supabase = createClient();
+  const supabase = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
@@ -83,7 +83,7 @@ export async function updateGoals(
   carbsGoal: number,
   fatGoal: number
 ) {
-  const supabase = createClient();
+  const supabase = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
