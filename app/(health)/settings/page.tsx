@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { DEFAULT_PROFILE } from '@/types/health';
 import { SettingsForm } from '@/components/health/SettingsForm';
+import { getT } from '@/lib/i18n/server';
 
 export const revalidate = 0;
 
@@ -15,6 +16,7 @@ type ProfileRow = {
 };
 
 export default async function SettingsPage() {
+  const t = getT();
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -31,8 +33,8 @@ export default async function SettingsPage() {
   return (
     <div>
       <div className="px-4 py-5 border-b border-border">
-        <h1 className="text-xl font-bold">Settings</h1>
-        <p className="text-sm text-muted-foreground">Goals &amp; preferences</p>
+        <h1 className="text-xl font-bold">{t('settings.title')}</h1>
+        <p className="text-sm text-muted-foreground">{t('settings.subtitle')}</p>
       </div>
       <SettingsForm
         calorieGoal={Number(p.calorie_goal)}

@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { DeleteMealButton } from '@/components/health/DeleteMealButton';
 import { MEAL_TYPES } from '@/lib/health/constants';
+import { getT } from '@/lib/i18n/server';
 import type { MealLogEntry, MealType } from '@/types/health';
 import { format } from 'date-fns';
 import Link from 'next/link';
@@ -10,6 +11,7 @@ import { Plus, UtensilsCrossed } from 'lucide-react';
 export const revalidate = 0;
 
 export default async function MealsPage() {
+  const t = getT();
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -37,12 +39,12 @@ export default async function MealsPage() {
       <div className="sticky top-0 bg-background/95 backdrop-blur border-b border-white/[0.07] px-4 py-4 z-10">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold">Today&apos;s Meals</h1>
+            <h1 className="text-xl font-bold">{t('meals.title')}</h1>
             <p className="text-xs text-muted-foreground">{format(new Date(), 'EEEE, MMMM d')}</p>
           </div>
           <div className="text-right">
             <p className="text-2xl font-bold gradient-text tabular-nums">{totalCal}</p>
-            <p className="text-xs text-muted-foreground">{totalProtein}g protein</p>
+            <p className="text-xs text-muted-foreground">{t('meals.proteinTotal', { n: totalProtein })}</p>
           </div>
         </div>
       </div>
@@ -51,33 +53,33 @@ export default async function MealsPage() {
         {allMeals.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <UtensilsCrossed size={40} className="text-muted-foreground/40 mb-3" />
-            <p className="font-medium text-muted-foreground">Nothing logged yet today</p>
-            <p className="text-sm text-muted-foreground mt-1">Tap + to log your first meal</p>
+            <p className="font-medium text-muted-foreground">{t('meals.empty')}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('meals.emptyHint')}</p>
           </div>
         )}
 
-        {mealsByType.map(({ id, label, emoji, time, entries }) => {
+        {mealsByType.map(({ id, labelKey, emoji, time, entries }) => {
           if (entries.length === 0) return null;
           const mealCal = Math.round(entries.reduce((s, m) => s + (m.calories ?? 0), 0));
           return (
             <div key={id} className="glass-card rounded-2xl overflow-hidden">
               <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.05]">
                 <span className="text-base">{emoji}</span>
-                <span className="text-sm font-semibold">{label}</span>
-                <span className="text-xs text-muted-foreground ml-auto">{time}</span>
+                <span className="text-sm font-semibold">{t(labelKey)}</span>
+                <span className="text-xs text-muted-foreground ml-auto">{time === 'Anytime' ? t('mealtime.anytime') : time}</span>
                 <span className="text-xs font-bold text-primary ml-2">{mealCal} kcal</span>
               </div>
               {entries.map(entry => (
                 <div key={entry.id} className="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.04] last:border-0">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{entry.food_name ?? 'Unknown food'}</p>
+                    <p className="text-sm font-medium truncate">{entry.food_name ?? t('meals.unknownFood')}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs text-muted-foreground">{entry.portion_g}g</span>
                       {entry.calories != null && (
                         <span className="text-xs text-primary font-semibold">{Math.round(entry.calories)} kcal</span>
                       )}
                       {entry.protein_g != null && (
-                        <span className="text-xs text-blue-400">{entry.protein_g}g P</span>
+                        <span className="text-xs text-blue-400">{t('meals.proteinShort', { n: entry.protein_g })}</span>
                       )}
                     </div>
                   </div>
@@ -93,7 +95,7 @@ export default async function MealsPage() {
           className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl border border-dashed border-white/[0.10] text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors text-sm font-medium"
         >
           <Plus size={18} />
-          Log another meal
+          {t('meals.logAnother')}
         </Link>
       </div>
     </div>

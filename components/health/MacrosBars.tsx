@@ -33,14 +33,27 @@ interface MacrosBarsProps {
   carbsGoal: number;
   fat: number;
   fatGoal: number;
+  proteinLabel: string;
+  carbsLabel: string;
+  fatLabel: string;
 }
 
-export function MacrosBars({ protein, proteinGoal, carbs, carbsGoal, fat, fatGoal }: MacrosBarsProps) {
+export function MacrosBars({
+  protein,
+  proteinGoal,
+  carbs,
+  carbsGoal,
+  fat,
+  fatGoal,
+  proteinLabel,
+  carbsLabel,
+  fatLabel,
+}: MacrosBarsProps) {
   return (
     <div className="flex gap-4 w-full">
-      <MacroBar label="Protein" current={protein} goal={proteinGoal} color="#3b82f6" />
-      <MacroBar label="Carbs" current={carbs} goal={carbsGoal} color="#f59e0b" />
-      <MacroBar label="Fat" current={fat} goal={fatGoal} color="#ec4899" />
+      <MacroBar label={proteinLabel} current={protein} goal={proteinGoal} color="#3b82f6" />
+      <MacroBar label={carbsLabel} current={carbs} goal={carbsGoal} color="#f59e0b" />
+      <MacroBar label={fatLabel} current={fat} goal={fatGoal} color="#ec4899" />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { WeightLogForm } from '@/components/health/WeightLogForm';
+import { getT } from '@/lib/i18n/server';
 import { format, parseISO } from 'date-fns';
 import { TrendingDown, TrendingUp, Minus, Scale } from 'lucide-react';
 
@@ -9,6 +10,7 @@ export const revalidate = 0;
 type WeightEntry = { id: string; date: string; weight_kg: number; notes: string | null };
 
 export default async function WeightPage() {
+  const t = getT();
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -35,7 +37,7 @@ export default async function WeightPage() {
       <div className="px-4 py-5 border-b border-white/[0.07]">
         <div className="flex items-center gap-2">
           <Scale size={22} className="text-primary" />
-          <h1 className="text-xl font-bold">Weight Log</h1>
+          <h1 className="text-xl font-bold">{t('weight.title')}</h1>
         </div>
         <p className="text-sm text-muted-foreground">{format(new Date(), 'EEEE, MMMM d')}</p>
       </div>
@@ -59,12 +61,12 @@ export default async function WeightPage() {
               <p className={`text-base font-bold ${
                 delta < 0 ? 'text-primary' : delta > 0 ? 'text-red-400' : 'text-foreground'
               }`}>
-                {delta < 0 ? `−${Math.abs(delta).toFixed(1)} kg` : delta > 0 ? `+${delta.toFixed(1)} kg` : 'No change'}
+                {delta < 0 ? t('weight.down', { n: Math.abs(delta).toFixed(1) }) : delta > 0 ? t('weight.up', { n: delta.toFixed(1) }) : t('weight.noChange')}
               </p>
               <p className="text-xs text-muted-foreground">
-                {delta < 0 ? 'Down from last entry — great progress!' :
-                 delta > 0 ? 'Up from last entry' :
-                 'Same as last entry'}
+                {delta < 0 ? t('weight.downMsg') :
+                 delta > 0 ? t('weight.upMsg') :
+                 t('weight.sameMsg')}
               </p>
             </div>
           </div>
@@ -73,7 +75,7 @@ export default async function WeightPage() {
         {/* Log form */}
         <div className="glass-card rounded-3xl p-4">
           <h2 className="font-semibold mb-4">
-            {todayEntry ? 'Update Today\'s Weight' : 'Log Today\'s Weight'}
+            {todayEntry ? t('weight.updateToday') : t('weight.logToday')}
           </h2>
           <WeightLogForm currentWeight={todayEntry ? Number(todayEntry.weight_kg) : undefined} />
         </div>
@@ -81,7 +83,7 @@ export default async function WeightPage() {
         {/* History */}
         {entries.length > 0 && (
           <div>
-            <h2 className="font-semibold mb-3">History</h2>
+            <h2 className="font-semibold mb-3">{t('weight.history')}</h2>
             <div className="space-y-2">
               {entries.map((entry, i) => {
                 const prev = entries[i + 1];
@@ -92,7 +94,7 @@ export default async function WeightPage() {
                       <p className="text-sm font-medium flex items-center gap-2">
                         {format(parseISO(entry.date), 'EEE, MMM d')}
                         {entry.date === today && (
-                          <span className="text-xs bg-primary/20 text-primary rounded-full px-2 py-0.5">Today</span>
+                          <span className="text-xs bg-primary/20 text-primary rounded-full px-2 py-0.5">{t('common.today')}</span>
                         )}
                       </p>
                       {entry.notes && (
@@ -100,7 +102,7 @@ export default async function WeightPage() {
                       )}
                     </div>
                     <div className="text-right">
-                      <span className="text-lg font-bold tabular-nums">{Number(entry.weight_kg).toFixed(1)} kg</span>
+                      <span className="text-lg font-bold tabular-nums">{Number(entry.weight_kg).toFixed(1)} {t('unit.kg')}</span>
                       {diff !== null && (
                         <p className={`text-xs tabular-nums font-medium ${
                           diff < 0 ? 'text-primary' : diff > 0 ? 'text-red-400' : 'text-muted-foreground'

@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import { CalorieRing } from '@/components/health/CalorieRing';
 import { MacrosBars } from '@/components/health/MacrosBars';
 import { MealChecklist } from '@/components/health/MealChecklist';
+import { getT } from '@/lib/i18n/server';
+import type { TranslationKey } from '@/lib/i18n/translations';
 import { DEFAULT_PROFILE } from '@/types/health';
 import type { MealLogEntry } from '@/types/health';
 import { format } from 'date-fns';
@@ -22,6 +24,7 @@ const TYPE_EMOJI: Record<string, string> = {
 };
 
 export default async function DashboardPage() {
+  const t = getT();
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -85,7 +88,7 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className="flex items-start justify-between pt-2">
         <div>
-          <h1 className="text-2xl font-bold gradient-text">Hey, {p.name} 👋</h1>
+          <h1 className="text-2xl font-bold gradient-text">{t('dash.greeting', { name: p.name })}</h1>
           <p className="text-sm text-muted-foreground">{dateLabel}</p>
         </div>
         <div className="flex items-center gap-1">
@@ -104,7 +107,7 @@ export default async function DashboardPage() {
             }`}
           >
             <span className="text-base font-bold tabular-nums leading-tight">{Number(currentWeight).toFixed(1)}</span>
-            <span className="text-[10px] text-muted-foreground">kg</span>
+            <span className="text-[10px] text-muted-foreground">{t('unit.kg')}</span>
           </Link>
         </div>
       </div>
@@ -116,6 +119,9 @@ export default async function DashboardPage() {
           protein={totalProtein} proteinGoal={Number(p.protein_goal_g)}
           carbs={totalCarbs} carbsGoal={Number(p.carbs_goal_g)}
           fat={totalFat} fatGoal={Number(p.fat_goal_g)}
+          proteinLabel={t('form.protein')}
+          carbsLabel={t('form.carbs')}
+          fatLabel={t('form.fat')}
         />
       </div>
 
@@ -124,9 +130,9 @@ export default async function DashboardPage() {
         <div className="glass-card rounded-2xl p-4">
           <div className="flex items-center gap-1.5 mb-2">
             <TrendingDown size={14} className="text-primary" />
-            <span className="text-xs font-semibold">Weight Goal</span>
+            <span className="text-xs font-semibold">{t('dash.weightGoal')}</span>
           </div>
-          <p className="text-xs text-muted-foreground mb-2">{kgToGo.toFixed(1)} kg to go</p>
+          <p className="text-xs text-muted-foreground mb-2">{t('dash.toGo', { n: kgToGo.toFixed(1) })}</p>
           <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
             <div
               className="h-full rounded-full bg-primary transition-all duration-700"
@@ -134,18 +140,18 @@ export default async function DashboardPage() {
             />
           </div>
           <div className="flex justify-between text-[10px] text-muted-foreground mt-1.5">
-            <span>{Number(p.target_weight_kg)} kg</span>
-            <span>{Number(currentWeight).toFixed(1)} kg</span>
+            <span>{Number(p.target_weight_kg)} {t('unit.kg')}</span>
+            <span>{Number(currentWeight).toFixed(1)} {t('unit.kg')}</span>
           </div>
         </div>
 
         <Link href="/drinks" className="glass-card rounded-2xl p-4 hover:border-blue-500/30 transition-colors block">
           <div className="flex items-center gap-1.5 mb-2">
             <Droplets size={14} className="text-blue-400" />
-            <span className="text-xs font-semibold">Water</span>
+            <span className="text-xs font-semibold">{t('dash.water')}</span>
           </div>
           <p className="text-xl font-bold tabular-nums text-blue-400">
-            {totalWaterMl >= 1000 ? `${(totalWaterMl / 1000).toFixed(1)}L` : `${totalWaterMl}ml`}
+            {totalWaterMl >= 1000 ? `${(totalWaterMl / 1000).toFixed(1)}${t('unit.l')}` : `${totalWaterMl}${t('unit.ml')}`}
           </p>
           <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden mt-2">
             <div
@@ -153,7 +159,7 @@ export default async function DashboardPage() {
               style={{ width: `${waterPct * 100}%` }}
             />
           </div>
-          <p className="text-[10px] text-muted-foreground mt-1.5">Goal: {WATER_GOAL_ML / 1000}L</p>
+          <p className="text-[10px] text-muted-foreground mt-1.5">{t('dash.waterGoal', { n: WATER_GOAL_ML / 1000 })}</p>
         </Link>
       </div>
 
@@ -165,9 +171,12 @@ export default async function DashboardPage() {
         >
           <span className="text-xl">{TYPE_EMOJI[workouts[0].type] ?? '💪'}</span>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-primary">Workout done today! 🔥</p>
+            <p className="text-sm font-semibold text-primary">{t('dash.workoutDone')}</p>
             <p className="text-xs text-muted-foreground">
-              {workouts.map((w) => w.type).join(', ')} &middot; {totalWorkoutMin} min total
+              {t('dash.workoutSummary', {
+                type: workouts.map((w) => t(`workout.${w.type}` as TranslationKey)).join(', '),
+                min: totalWorkoutMin,
+              })}
             </p>
           </div>
         </Link>
@@ -177,7 +186,7 @@ export default async function DashboardPage() {
           className="flex items-center gap-3 glass-card rounded-2xl px-4 py-3.5 hover:border-primary/30 transition-colors border-dashed"
         >
           <Dumbbell size={18} className="text-muted-foreground" />
-          <span className="text-sm text-muted-foreground flex-1">No workout logged today</span>
+          <span className="text-sm text-muted-foreground flex-1">{t('dash.noWorkout')}</span>
           <Plus size={16} className="text-muted-foreground" />
         </Link>
       )}
@@ -185,10 +194,10 @@ export default async function DashboardPage() {
       {/* Today's meals */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold">Today&apos;s Meals</h2>
+          <h2 className="font-semibold">{t('dash.todaysMeals')}</h2>
           <Link href="/meals/log" className="flex items-center gap-1 text-xs text-primary font-medium">
             <Plus size={14} />
-            Add meal
+            {t('dash.addMeal')}
           </Link>
         </div>
         <MealChecklist meals={allMeals} />
@@ -202,8 +211,8 @@ export default async function DashboardPage() {
         >
           <Scale size={20} className="text-primary shrink-0" />
           <div>
-            <p className="text-sm font-semibold">{todayHasWeight ? 'Update Weight' : 'Log Weight'}</p>
-            <p className="text-xs text-muted-foreground">Daily check-in</p>
+            <p className="text-sm font-semibold">{todayHasWeight ? t('dash.updateWeight') : t('dash.logWeight')}</p>
+            <p className="text-xs text-muted-foreground">{t('dash.dailyCheckin')}</p>
           </div>
         </Link>
         <Link
@@ -212,8 +221,8 @@ export default async function DashboardPage() {
         >
           <Plus size={20} className="text-primary shrink-0" />
           <div>
-            <p className="text-sm font-semibold text-primary">Log Meal</p>
-            <p className="text-xs text-muted-foreground">Quick add</p>
+            <p className="text-sm font-semibold text-primary">{t('dash.logMeal')}</p>
+            <p className="text-xs text-muted-foreground">{t('dash.quickAdd')}</p>
           </div>
         </Link>
       </div>

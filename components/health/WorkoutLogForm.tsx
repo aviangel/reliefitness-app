@@ -2,20 +2,23 @@
 
 import { useState, useTransition } from 'react';
 import { logWorkout } from '@/lib/health/actions';
+import { useI18n } from '@/lib/i18n/context';
+import type { TranslationKey } from '@/lib/i18n/translations';
 import { CheckCircle2 } from 'lucide-react';
 
-const WORKOUT_TYPES = [
-  { id: 'gym', label: 'Gym', emoji: '🏋️' },
-  { id: 'walk', label: 'Walk', emoji: '🚶' },
-  { id: 'run', label: 'Run', emoji: '🏃' },
-  { id: 'swim', label: 'Swim', emoji: '🏊' },
-  { id: 'cycling', label: 'Cycling', emoji: '🚴' },
-  { id: 'other', label: 'Other', emoji: '💪' },
+const WORKOUT_TYPES: { id: string; labelKey: TranslationKey; emoji: string }[] = [
+  { id: 'gym', labelKey: 'workout.gym', emoji: '🏋️' },
+  { id: 'walk', labelKey: 'workout.walk', emoji: '🚶' },
+  { id: 'run', labelKey: 'workout.run', emoji: '🏃' },
+  { id: 'swim', labelKey: 'workout.swim', emoji: '🏊' },
+  { id: 'cycling', labelKey: 'workout.cycling', emoji: '🚴' },
+  { id: 'other', labelKey: 'workout.other', emoji: '💪' },
 ];
 
 const DURATIONS = [20, 30, 45, 60, 75, 90];
 
 export function WorkoutLogForm() {
+  const { t } = useI18n();
   const [type, setType] = useState('gym');
   const [duration, setDuration] = useState(60);
   const [customDuration, setCustomDuration] = useState('');
@@ -28,7 +31,7 @@ export function WorkoutLogForm() {
 
   const handleSubmit = () => {
     if (!finalDuration || finalDuration < 1) {
-      setError('Enter a valid duration');
+      setError(t('wk.invalidDuration'));
       return;
     }
     setError('');
@@ -37,7 +40,7 @@ export function WorkoutLogForm() {
         await logWorkout(type, finalDuration, notes || undefined);
         setDone(true);
       } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : 'Failed to log workout');
+        setError(e instanceof Error ? e.message : t('wk.failed'));
       }
     });
   };
@@ -49,9 +52,9 @@ export function WorkoutLogForm() {
         <div className="w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center">
           <CheckCircle2 size={36} className="text-primary" />
         </div>
-        <p className="text-lg font-bold">Workout logged!</p>
+        <p className="text-lg font-bold">{t('wk.logged')}</p>
         <p className="text-sm text-muted-foreground">
-          {w?.emoji} {w?.label} &middot; {finalDuration} min
+          {t('wk.successDetail', { emoji: w?.emoji ?? '', type: w ? t(w.labelKey) : '', min: finalDuration })}
         </p>
       </div>
     );
@@ -61,7 +64,7 @@ export function WorkoutLogForm() {
     <div className="p-4 space-y-5">
       {/* Type */}
       <div>
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">Workout Type</p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">{t('wk.type')}</p>
         <div className="grid grid-cols-3 gap-2">
           {WORKOUT_TYPES.map((wt) => (
             <button
@@ -75,7 +78,7 @@ export function WorkoutLogForm() {
               }`}
             >
               <span className="text-2xl">{wt.emoji}</span>
-              <span className="text-xs font-medium">{wt.label}</span>
+              <span className="text-xs font-medium">{t(wt.labelKey)}</span>
             </button>
           ))}
         </div>
@@ -83,7 +86,7 @@ export function WorkoutLogForm() {
 
       {/* Duration */}
       <div>
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">Duration</p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">{t('wk.duration')}</p>
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-0.5">
           {DURATIONS.map((d) => (
             <button
@@ -102,7 +105,7 @@ export function WorkoutLogForm() {
         </div>
         <input
           type="number"
-          placeholder="Custom duration (minutes)"
+          placeholder={t('wk.customDuration')}
           value={customDuration}
           onChange={(e) => { setCustomDuration(e.target.value); }}
           className="mt-2.5 w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/50"
@@ -111,11 +114,11 @@ export function WorkoutLogForm() {
 
       {/* Notes */}
       <div>
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">Notes (optional)</p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">{t('wk.notes')} ({t('common.optional')})</p>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="e.g. Chest & back, 5km run, felt strong..."
+          placeholder={t('wk.notesPlaceholder')}
           rows={2}
           className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/50 resize-none"
         />
@@ -135,7 +138,7 @@ export function WorkoutLogForm() {
             : 'bg-primary text-primary-foreground shadow-[0_4px_20px_rgba(34,197,94,0.3)] hover:opacity-90'
         }`}
       >
-        {isPending ? 'Logging...' : 'Log Workout'}
+        {isPending ? t('common.logging') : t('wk.logAction')}
       </button>
     </div>
   );

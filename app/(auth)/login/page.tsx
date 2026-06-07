@@ -5,8 +5,10 @@ export const dynamic = 'force-dynamic';
 import { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useI18n } from '@/lib/i18n/context';
 
 function LoginForm() {
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,7 +22,7 @@ function LoginForm() {
     setError('');
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) {
-      setError('Incorrect email or password.');
+      setError(t('login.error'));
       setLoading(false);
       return;
     }
@@ -33,25 +35,25 @@ function LoginForm() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
           <div className="text-6xl mb-4">💪</div>
-          <h1 className="text-3xl font-bold text-gradient">Health Tracker</h1>
-          <p className="text-muted-foreground mt-2 text-sm">Your personal fitness companion</p>
+          <h1 className="text-3xl font-bold text-gradient">{t('login.title')}</h1>
+          <p className="text-muted-foreground mt-2 text-sm">{t('login.subtitle')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium mb-1.5 block text-muted-foreground">Email</label>
+            <label className="text-sm font-medium mb-1.5 block text-muted-foreground">{t('login.email')}</label>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={t('login.emailPlaceholder')}
               required
               dir="ltr"
               className="w-full bg-card border border-border rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1.5 block text-muted-foreground">Password</label>
+            <label className="text-sm font-medium mb-1.5 block text-muted-foreground">{t('login.password')}</label>
             <input
               type="password"
               value={password}
@@ -72,7 +74,7 @@ function LoginForm() {
             disabled={loading}
             className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 active:scale-[0.98]"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? t('login.signingIn') : t('login.signIn')}
           </button>
         </form>
       </div>

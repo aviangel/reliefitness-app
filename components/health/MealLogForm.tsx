@@ -5,14 +5,16 @@ import { useRouter } from 'next/navigation';
 import { FOODS } from '@/lib/health/foods';
 import { MEAL_TYPES, PORTION_MULTIPLIERS } from '@/lib/health/constants';
 import { logMeal } from '@/lib/health/actions';
+import { useI18n } from '@/lib/i18n/context';
+import type { TranslationKey } from '@/lib/i18n/translations';
 import type { FoodCategory, MealType, FoodItem } from '@/types/health';
 import { CheckCircle2, Search, X } from 'lucide-react';
 
-const CATEGORIES = [
-  { id: 'home_meals' as FoodCategory, emoji: '🏠', short: 'Home' },
-  { id: 'junk_food' as FoodCategory, emoji: '🍔', short: 'Junk' },
-  { id: 'israeli_sweets' as FoodCategory, emoji: '🍫', short: 'Sweets' },
-  { id: 'drinks' as FoodCategory, emoji: '🥤', short: 'Drinks' },
+const CATEGORIES: { id: FoodCategory; emoji: string; shortKey: TranslationKey }[] = [
+  { id: 'home_meals', emoji: '🏠', shortKey: 'cat.home' },
+  { id: 'junk_food', emoji: '🍔', shortKey: 'cat.junk' },
+  { id: 'israeli_sweets', emoji: '🍫', shortKey: 'cat.sweets' },
+  { id: 'drinks', emoji: '🥤', shortKey: 'cat.drinks' },
 ];
 
 interface MealLogFormProps {
@@ -20,6 +22,7 @@ interface MealLogFormProps {
 }
 
 export function MealLogForm({ defaultMealType }: MealLogFormProps) {
+  const { t } = useI18n();
   const validDefault = MEAL_TYPES.find(m => m.id === defaultMealType)?.id ?? 'lunch';
   const [mealType, setMealType] = useState<MealType>(validDefault as MealType);
   const [activeCategory, setActiveCategory] = useState<FoodCategory>('home_meals');
@@ -47,7 +50,7 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
   const estCal = selectedFood ? Math.round((selectedFood.calories_per_100g * portionG) / 100) : 0;
 
   const handleSubmit = () => {
-    if (!selectedFood) { setError('Please select a food.'); return; }
+    if (!selectedFood) { setError(t('form.pleaseSelectFood')); return; }
     setError('');
     const fd = new FormData();
     fd.set('food_name', selectedFood.name);
@@ -59,7 +62,7 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
         setDone(true);
         setTimeout(() => router.push('/dashboard'), 1200);
       } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : 'Failed to log meal.');
+        setError(e instanceof Error ? e.message : t('form.failedLogMeal'));
       }
     });
   };
@@ -70,8 +73,8 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
         <div className="w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center">
           <CheckCircle2 size={36} className="text-primary" />
         </div>
-        <p className="text-lg font-semibold">Logged!</p>
-        <p className="text-sm text-muted-foreground">Heading back to dashboard...</p>
+        <p className="text-lg font-semibold">{t('form.logged')}</p>
+        <p className="text-sm text-muted-foreground">{t('form.headingBack')}</p>
       </div>
     );
   }
@@ -80,7 +83,7 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
     <div className="p-4 space-y-5">
       {/* Meal Type */}
       <div>
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">Meal Type</p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">{t('form.mealType')}</p>
         <div className="grid grid-cols-3 gap-2">
           {MEAL_TYPES.map(mt => (
             <button
@@ -94,7 +97,7 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
               }`}
             >
               <span className="text-xl">{mt.emoji}</span>
-              <span className="leading-tight text-center">{mt.label}</span>
+              <span className="leading-tight text-center">{t(mt.labelKey)}</span>
             </button>
           ))}
         </div>
@@ -102,7 +105,7 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
 
       {/* Food Selector */}
       <div>
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">Food</p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">{t('form.food')}</p>
 
         {selectedFood ? (
           /* Selected food bar */
@@ -114,10 +117,10 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-primary truncate">{selectedFood.name}</p>
               {selectedFood.name_he && (
-                <p className="text-xs text-muted-foreground">{selectedFood.name_he} · Tap to change</p>
+                <p className="text-xs text-muted-foreground">{selectedFood.name_he} · {t('form.tapToChange')}</p>
               )}
               {!selectedFood.name_he && (
-                <p className="text-xs text-muted-foreground">Tap to change</p>
+                <p className="text-xs text-muted-foreground">{t('form.tapToChange')}</p>
               )}
             </div>
             <X size={16} className="text-muted-foreground shrink-0" />
@@ -130,7 +133,7 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
               <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/60" />
               <input
                 type="text"
-                placeholder="Search foods..."
+                placeholder={t('form.searchFoods')}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/50"
@@ -161,7 +164,7 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
                     }`}
                   >
                     <span>{cat.emoji}</span>
-                    <span>{cat.short}</span>
+                    <span>{t(cat.shortKey)}</span>
                   </button>
                 ))}
               </div>
@@ -187,14 +190,14 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
                       {Math.round(food.calories_per_100g * food.default_portion_g / 100)} kcal
                     </p>
                     <p className="text-[10px] text-muted-foreground">
-                      {Math.round(food.protein_per_100g * food.default_portion_g / 100)}g P
+                      {t('meals.proteinShort', { n: Math.round(food.protein_per_100g * food.default_portion_g / 100) })}
                     </p>
                   </div>
                 </button>
               ))}
               {filteredFoods.length === 0 && (
                 <div className="py-8 text-center">
-                  <p className="text-sm text-muted-foreground">No foods found</p>
+                  <p className="text-sm text-muted-foreground">{t('form.noFoods')}</p>
                 </div>
               )}
             </div>
@@ -206,7 +209,7 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
       {selectedFood && (
         <div>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
-            Portion — <span className="text-foreground normal-case font-bold">{portionG}g</span>
+            {t('form.portion', { n: portionG })}
           </p>
           <div className="flex gap-2">
             {PORTION_MULTIPLIERS.map(pm => (
@@ -232,20 +235,20 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
         <div className="glass-card rounded-2xl p-4">
           <div className="text-center mb-4">
             <span className="text-4xl font-bold gradient-text tabular-nums">{estCal}</span>
-            <span className="text-lg text-muted-foreground ml-1">kcal</span>
+            <span className="text-lg text-muted-foreground ml-1">{t('unit.kcal')}</span>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="bg-blue-500/10 rounded-xl p-2.5">
               <div className="text-sm font-bold text-blue-400 tabular-nums">{calcNutrient(selectedFood.protein_per_100g)}g</div>
-              <div className="text-xs text-muted-foreground">Protein</div>
+              <div className="text-xs text-muted-foreground">{t('form.protein')}</div>
             </div>
             <div className="bg-amber-500/10 rounded-xl p-2.5">
               <div className="text-sm font-bold text-amber-400 tabular-nums">{calcNutrient(selectedFood.carbs_per_100g)}g</div>
-              <div className="text-xs text-muted-foreground">Carbs</div>
+              <div className="text-xs text-muted-foreground">{t('form.carbs')}</div>
             </div>
             <div className="bg-pink-500/10 rounded-xl p-2.5">
               <div className="text-sm font-bold text-pink-400 tabular-nums">{calcNutrient(selectedFood.fat_per_100g)}g</div>
-              <div className="text-xs text-muted-foreground">Fat</div>
+              <div className="text-xs text-muted-foreground">{t('form.fat')}</div>
             </div>
           </div>
         </div>
@@ -266,10 +269,10 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
         }`}
       >
         {isPending
-          ? 'Logging...'
+          ? t('common.logging')
           : selectedFood
-          ? `Log ${selectedFood.name.split(' ')[0]}`
-          : 'Select a food to log'}
+          ? t('form.logFood', { name: selectedFood.name.split(' ')[0] })
+          : t('form.selectFood')}
       </button>
     </div>
   );

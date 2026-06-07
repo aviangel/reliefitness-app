@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { Heebo } from 'next/font/google';
 import { PwaRegister } from '@/components/PwaRegister';
+import { I18nProvider } from '@/lib/i18n/context';
+import { getLang, getDir } from '@/lib/i18n/server';
 import './globals.css';
 
 const heebo = Heebo({
@@ -33,11 +35,15 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const lang = getLang();
+  const dir = getDir(lang);
   return (
-    <html lang="en" className="dark">
+    <html lang={lang} dir={dir} className="dark">
       <body className={`${heebo.variable} font-heebo antialiased bg-background text-foreground`}>
-        <PwaRegister />
-        {children}
+        <I18nProvider lang={lang}>
+          <PwaRegister />
+          {children}
+        </I18nProvider>
       </body>
     </html>
   );

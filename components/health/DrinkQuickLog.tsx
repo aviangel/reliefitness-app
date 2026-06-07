@@ -2,13 +2,15 @@
 
 import { useTransition } from 'react';
 import { logDrink } from '@/lib/health/actions';
+import { useI18n } from '@/lib/i18n/context';
+import type { TranslationKey } from '@/lib/i18n/translations';
 
 type DrinkType = 'water' | 'zero' | 'diet_coke';
 
-const DRINKS = [
-  { type: 'water' as DrinkType, label: 'Water', emoji: '💧', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20' },
-  { type: 'zero' as DrinkType, label: 'Zero', emoji: '🟢', color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20 hover:bg-green-500/20' },
-  { type: 'diet_coke' as DrinkType, label: 'Diet Coke', emoji: '🥤', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20 hover:bg-red-500/20' },
+const DRINKS: { type: DrinkType; labelKey: TranslationKey; emoji: string; color: string; bg: string }[] = [
+  { type: 'water', labelKey: 'drink.water', emoji: '💧', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20' },
+  { type: 'zero', labelKey: 'drink.zero', emoji: '🟢', color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20 hover:bg-green-500/20' },
+  { type: 'diet_coke', labelKey: 'drink.diet_coke', emoji: '🥤', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20 hover:bg-red-500/20' },
 ];
 
 const AMOUNTS = [150, 250, 330, 500];
@@ -19,6 +21,7 @@ interface DrinkQuickLogProps {
 }
 
 export function DrinkQuickLog({ selectedType, onTypeChange }: DrinkQuickLogProps) {
+  const { t } = useI18n();
   const [isPending, startTransition] = useTransition();
 
   const handleLog = (amount: number) => {
@@ -43,7 +46,7 @@ export function DrinkQuickLog({ selectedType, onTypeChange }: DrinkQuickLogProps
             }`}
           >
             <span className="text-2xl">{d.emoji}</span>
-            <span>{d.label}</span>
+            <span>{t(d.labelKey)}</span>
           </button>
         ))}
       </div>
@@ -63,7 +66,7 @@ export function DrinkQuickLog({ selectedType, onTypeChange }: DrinkQuickLogProps
         ))}
       </div>
       {isPending && (
-        <p className="text-xs text-center text-muted-foreground animate-pulse">Logging...</p>
+        <p className="text-xs text-center text-muted-foreground animate-pulse">{t('common.logging')}</p>
       )}
     </div>
   );

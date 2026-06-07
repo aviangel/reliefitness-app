@@ -3,22 +3,25 @@
 import { useState, useEffect, useCallback, useTransition } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { logDrink, deleteDrink } from '@/lib/health/actions';
+import { useI18n } from '@/lib/i18n/context';
+import type { TranslationKey } from '@/lib/i18n/translations';
 import { format } from 'date-fns';
 import { Droplets, X } from 'lucide-react';
 
 type DrinkType = 'water' | 'zero' | 'diet_coke';
 type DrinkEntry = { id: string; type: DrinkType; amount_ml: number; logged_at: string | null };
 
-const DRINKS = [
-  { type: 'water' as DrinkType, label: 'Water', emoji: '💧', color: 'text-blue-400', activeBg: 'bg-blue-500/20 border-blue-500/40 text-blue-400', inactiveBg: 'bg-white/[0.03] border-white/[0.06] text-muted-foreground' },
-  { type: 'zero' as DrinkType, label: 'Zero', emoji: '🟢', color: 'text-emerald-400', activeBg: 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400', inactiveBg: 'bg-white/[0.03] border-white/[0.06] text-muted-foreground' },
-  { type: 'diet_coke' as DrinkType, label: 'Diet Coke', emoji: '🥤', color: 'text-rose-400', activeBg: 'bg-rose-500/20 border-rose-500/40 text-rose-400', inactiveBg: 'bg-white/[0.03] border-white/[0.06] text-muted-foreground' },
+const DRINKS: { type: DrinkType; labelKey: TranslationKey; emoji: string; color: string; activeBg: string; inactiveBg: string }[] = [
+  { type: 'water', labelKey: 'drink.water', emoji: '💧', color: 'text-blue-400', activeBg: 'bg-blue-500/20 border-blue-500/40 text-blue-400', inactiveBg: 'bg-white/[0.03] border-white/[0.06] text-muted-foreground' },
+  { type: 'zero', labelKey: 'drink.zero', emoji: '🟢', color: 'text-emerald-400', activeBg: 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400', inactiveBg: 'bg-white/[0.03] border-white/[0.06] text-muted-foreground' },
+  { type: 'diet_coke', labelKey: 'drink.diet_coke', emoji: '🥤', color: 'text-rose-400', activeBg: 'bg-rose-500/20 border-rose-500/40 text-rose-400', inactiveBg: 'bg-white/[0.03] border-white/[0.06] text-muted-foreground' },
 ];
 
 const AMOUNTS = [150, 250, 330, 500, 750];
 const WATER_GOAL_ML = 2500;
 
 export default function DrinksPage() {
+  const { t } = useI18n();
   const [entries, setEntries] = useState<DrinkEntry[]>([]);
   const [selectedType, setSelectedType] = useState<DrinkType>('water');
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
@@ -68,7 +71,7 @@ export default function DrinksPage() {
       <div className="px-4 py-5 border-b border-white/[0.07]">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Droplets size={22} className="text-blue-400" />
-          Drinks
+          {t('drinks.title')}
         </h1>
         <p className="text-sm text-muted-foreground">{format(new Date(), 'EEEE, MMMM d')}</p>
       </div>
@@ -81,16 +84,15 @@ export default function DrinksPage() {
               <p className="text-4xl font-bold tabular-nums text-white">
                 {totalWater >= 1000 ? `${(totalWater / 1000).toFixed(1)} L` : `${totalWater} ml`}
               </p>
-              <p className="text-sm text-muted-foreground mt-0.5">of {WATER_GOAL_ML / 1000}L goal</p>
+              <p className="text-sm text-muted-foreground mt-0.5">{t('drinks.ofGoal', { n: WATER_GOAL_ML / 1000 })}</p>
             </div>
             <div className="text-right">
               {waterRemaining > 0 ? (
                 <>
-                  <p className="text-sm font-semibold text-blue-400">{waterRemaining >= 1000 ? `${(waterRemaining / 1000).toFixed(1)}L` : `${waterRemaining}ml`}</p>
-                  <p className="text-xs text-muted-foreground">remaining</p>
+                  <p className="text-sm font-semibold text-blue-400">{t('drinks.remaining', { n: waterRemaining >= 1000 ? `${(waterRemaining / 1000).toFixed(1)}${t('unit.l')}` : `${waterRemaining}${t('unit.ml')}` })}</p>
                 </>
               ) : (
-                <p className="text-sm font-bold text-primary">🎉 Done!</p>
+                <p className="text-sm font-bold text-primary">{t('drinks.done')}</p>
               )}
             </div>
           </div>
@@ -102,14 +104,14 @@ export default function DrinksPage() {
           </div>
           {totalAll > totalWater && (
             <p className="text-xs text-muted-foreground mt-2">
-              All drinks today: {totalAll >= 1000 ? `${(totalAll / 1000).toFixed(1)}L` : `${totalAll}ml`}
+              {t('drinks.allToday', { n: totalAll >= 1000 ? `${(totalAll / 1000).toFixed(1)}${t('unit.l')}` : `${totalAll}${t('unit.ml')}` })}
             </p>
           )}
         </div>
 
         {/* Quick log panel */}
         <div className="glass-card rounded-3xl p-4 space-y-4">
-          <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Quick Log</h2>
+          <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">{t('drinks.quickLog')}</h2>
 
           {/* Drink type buttons */}
           <div className="grid grid-cols-3 gap-2">
@@ -123,7 +125,7 @@ export default function DrinksPage() {
                 }`}
               >
                 <span className="text-2xl">{d.emoji}</span>
-                <span className="text-xs">{d.label}</span>
+                <span className="text-xs">{t(d.labelKey)}</span>
               </button>
             ))}
           </div>
@@ -142,7 +144,7 @@ export default function DrinksPage() {
                 }`}
               >
                 {ml}
-                <span className="block text-[9px] font-normal opacity-70">ml</span>
+                <span className="block text-[9px] font-normal opacity-70">{t('unit.ml')}</span>
               </button>
             ))}
           </div>
@@ -159,17 +161,17 @@ export default function DrinksPage() {
             }`}
           >
             {isPending
-              ? 'Logging...'
+              ? t('common.logging')
               : selectedAmount
-              ? `Log ${selectedAmount}ml ${selectedDrink.label}`
-              : 'Select an amount'}
+              ? t('drinks.logAction', { n: selectedAmount, type: t(selectedDrink.labelKey) })
+              : t('drinks.selectAmount')}
           </button>
         </div>
 
         {/* Today's log */}
         {!isLoading && entries.length > 0 && (
           <div>
-            <h2 className="font-semibold mb-3 text-sm">Today&apos;s Log</h2>
+            <h2 className="font-semibold mb-3 text-sm">{t('drinks.todaysLog')}</h2>
             <div className="space-y-2">
               {entries.map((entry) => {
                 const drink = DRINKS.find((d) => d.type === entry.type);
@@ -183,8 +185,8 @@ export default function DrinksPage() {
                   >
                     <span className="text-xl shrink-0">{drink?.emoji}</span>
                     <div className="flex-1">
-                      <span className={`text-sm font-semibold ${drink?.color}`}>{drink?.label}</span>
-                      <span className="text-xs text-muted-foreground ml-2">{entry.amount_ml}ml</span>
+                      <span className={`text-sm font-semibold ${drink?.color}`}>{drink ? t(drink.labelKey) : ''}</span>
+                      <span className="text-xs text-muted-foreground ml-2">{entry.amount_ml}{t('unit.ml')}</span>
                     </div>
                     <span className="text-xs text-muted-foreground tabular-nums">{time}</span>
                     <button
@@ -205,8 +207,8 @@ export default function DrinksPage() {
         {!isLoading && entries.length === 0 && (
           <div className="flex flex-col items-center gap-2 py-8 text-center">
             <Droplets size={36} className="text-muted-foreground/30" />
-            <p className="text-sm text-muted-foreground">No drinks logged yet today</p>
-            <p className="text-xs text-muted-foreground">Select a drink type and amount above</p>
+            <p className="text-sm text-muted-foreground">{t('drinks.empty')}</p>
+            <p className="text-xs text-muted-foreground">{t('drinks.emptyHint')}</p>
           </div>
         )}
       </div>

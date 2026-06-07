@@ -1,5 +1,6 @@
 import type { MealLogEntry } from '@/types/health';
 import { MEAL_TYPES } from '@/lib/health/constants';
+import { getT } from '@/lib/i18n/server';
 import Link from 'next/link';
 import { CheckCircle2, Clock, Plus } from 'lucide-react';
 
@@ -8,9 +9,11 @@ interface MealChecklistProps {
 }
 
 export function MealChecklist({ meals }: MealChecklistProps) {
+  const t = getT();
   return (
     <div className="space-y-2">
-      {MEAL_TYPES.map(({ id, label, emoji, time }) => {
+      {MEAL_TYPES.map(({ id, labelKey, emoji, time }) => {
+        const label = t(labelKey);
         const logged = meals.filter(m => m.meal_type === id);
         const totalCal = Math.round(logged.reduce((s, m) => s + (m.calories ?? 0), 0));
         const hasLog = logged.length > 0;
@@ -28,16 +31,16 @@ export function MealChecklist({ meals }: MealChecklistProps) {
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-2">
                 <span className="text-sm font-semibold">{label}</span>
-                <span className="text-xs text-muted-foreground">{time}</span>
+                <span className="text-xs text-muted-foreground">{time === 'Anytime' ? t('mealtime.anytime') : time}</span>
               </div>
               {hasLog ? (
                 <p className="text-xs text-muted-foreground truncate">
-                  {logged.map(m => m.food_name ?? 'Unknown').join(', ')}
+                  {logged.map(m => m.food_name ?? t('meals.unknownFood')).join(', ')}
                   {' · '}
                   <span className="text-primary font-medium">{totalCal} kcal</span>
                 </p>
               ) : (
-                <p className="text-xs text-muted-foreground">Not logged yet</p>
+                <p className="text-xs text-muted-foreground">{t('checklist.notLogged')}</p>
               )}
             </div>
             <div className="flex items-center gap-1.5 shrink-0">

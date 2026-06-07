@@ -1,5 +1,7 @@
 'use client';
 
+import { useI18n } from '@/lib/i18n/context';
+
 interface CalorieRingProps {
   calories: number;
   goal: number;
@@ -7,6 +9,7 @@ interface CalorieRingProps {
 }
 
 export function CalorieRing({ calories, goal, size = 160 }: CalorieRingProps) {
+  const { t } = useI18n();
   const progress = Math.min(calories / goal, 1.05);
   const overGoal = calories > goal;
   const stroke = 14;
@@ -46,17 +49,17 @@ export function CalorieRing({ calories, goal, size = 160 }: CalorieRingProps) {
           <span className="text-3xl font-bold tabular-nums" style={{ color }}>
             {Math.round(calories)}
           </span>
-          <span className="text-xs text-muted-foreground font-medium">kcal eaten</span>
+          <span className="text-xs text-muted-foreground font-medium">{t('ring.eaten')}</span>
         </div>
       </div>
       <p className="text-sm text-muted-foreground">
         {overGoal ? (
-          <span className="text-red-400 font-medium">+{Math.abs(remaining)} over goal</span>
+          <span className="text-red-400 font-medium">{t('ring.over', { n: Math.abs(remaining) })}</span>
         ) : (
-          <span>{remaining} kcal remaining</span>
+          <span>{t('ring.remaining', { n: remaining })}</span>
         )}
       </p>
-      <p className="text-xs text-muted-foreground">Daily goal: {goal} kcal</p>
+      <p className="text-xs text-muted-foreground">{t('ring.dailyGoal', { n: goal })}</p>
     </div>
   );
 }
