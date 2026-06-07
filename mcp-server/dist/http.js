@@ -9,6 +9,7 @@ import cors from 'cors';
 import crypto from 'crypto';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { createClient } from '@supabase/supabase-js';
+import ws from 'ws';
 import { createMcpServer } from './server.js';
 // ── Config ────────────────────────────────────────────────────────────────────
 const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, HEALTH_USER_ID, MCP_ACCESS_TOKEN, PORT = '3001', } = process.env;
@@ -18,7 +19,10 @@ for (const [k, v] of Object.entries({ SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, H
         process.exit(1);
     }
 }
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false },
+    realtime: { transport: ws },
+});
 // ── App ───────────────────────────────────────────────────────────────────────
 const app = express();
 app.use(cors({

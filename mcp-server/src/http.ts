@@ -10,6 +10,7 @@ import cors from 'cors';
 import crypto from 'crypto';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { createClient } from '@supabase/supabase-js';
+import ws from 'ws';
 import { createMcpServer } from './server.js';
 
 // ── Config ────────────────────────────────────────────────────────────────────
@@ -26,7 +27,10 @@ for (const [k, v] of Object.entries({ SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, H
   if (!v) { console.error(`Missing env var: ${k}`); process.exit(1); }
 }
 
-const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } });
+const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!, {
+  auth: { persistSession: false },
+  realtime: { transport: ws as any },
+});
 
 // ── App ───────────────────────────────────────────────────────────────────────
 
