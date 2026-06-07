@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { WeightLogForm } from '@/components/health/WeightLogForm';
 import { format, parseISO } from 'date-fns';
-import { TrendingDown, TrendingUp, Minus } from 'lucide-react';
+import { TrendingDown, TrendingUp, Minus, Scale } from 'lucide-react';
 
 export const revalidate = 0;
 
@@ -32,50 +32,67 @@ export default async function WeightPage() {
 
   return (
     <div>
-      <div className="px-4 py-5 border-b border-border">
-        <h1 className="text-xl font-bold">Weight Log</h1>
+      <div className="px-4 py-5 border-b border-white/[0.07]">
+        <div className="flex items-center gap-2">
+          <Scale size={22} className="text-primary" />
+          <h1 className="text-xl font-bold">Weight Log</h1>
+        </div>
         <p className="text-sm text-muted-foreground">{format(new Date(), 'EEEE, MMMM d')}</p>
       </div>
 
-      <div className="p-4 space-y-6">
+      <div className="p-4 space-y-4">
+        {/* Delta card */}
         {delta !== null && (
-          <div className={`flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-medium ${
-            delta < 0
-              ? 'bg-primary/10 text-primary'
-              : delta > 0
-              ? 'bg-red-500/10 text-red-400'
-              : 'bg-muted text-muted-foreground'
+          <div className={`glass-card rounded-2xl flex items-center gap-3 px-5 py-4 ${
+            delta < 0 ? 'border-primary/20' : delta > 0 ? 'border-red-500/20' : ''
           }`}>
-            {delta < 0 ? <TrendingDown size={18} /> : delta > 0 ? <TrendingUp size={18} /> : <Minus size={18} />}
-            <span>
-              {delta < 0 ? `Down ${Math.abs(delta).toFixed(1)} kg from last entry` :
-               delta > 0 ? `Up ${delta.toFixed(1)} kg from last entry` :
-               'Same as last entry'}
-            </span>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+              delta < 0 ? 'bg-primary/15' : delta > 0 ? 'bg-red-500/15' : 'bg-white/[0.06]'
+            }`}>
+              {delta < 0
+                ? <TrendingDown size={20} className="text-primary" />
+                : delta > 0
+                ? <TrendingUp size={20} className="text-red-400" />
+                : <Minus size={20} className="text-muted-foreground" />}
+            </div>
+            <div>
+              <p className={`text-base font-bold ${
+                delta < 0 ? 'text-primary' : delta > 0 ? 'text-red-400' : 'text-foreground'
+              }`}>
+                {delta < 0 ? `−${Math.abs(delta).toFixed(1)} kg` : delta > 0 ? `+${delta.toFixed(1)} kg` : 'No change'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {delta < 0 ? 'Down from last entry — great progress!' :
+                 delta > 0 ? 'Up from last entry' :
+                 'Same as last entry'}
+              </p>
+            </div>
           </div>
         )}
 
-        <div className="bg-card rounded-3xl border border-border p-4">
+        {/* Log form */}
+        <div className="glass-card rounded-3xl p-4">
           <h2 className="font-semibold mb-4">
             {todayEntry ? 'Update Today\'s Weight' : 'Log Today\'s Weight'}
           </h2>
           <WeightLogForm currentWeight={todayEntry ? Number(todayEntry.weight_kg) : undefined} />
         </div>
 
+        {/* History */}
         {entries.length > 0 && (
           <div>
             <h2 className="font-semibold mb-3">History</h2>
-            <div className="bg-card rounded-2xl border border-border overflow-hidden">
+            <div className="space-y-2">
               {entries.map((entry, i) => {
                 const prev = entries[i + 1];
                 const diff = prev != null ? Number(entry.weight_kg) - Number(prev.weight_kg) : null;
                 return (
-                  <div key={entry.id} className="flex items-center justify-between px-4 py-3.5 border-b border-border/50 last:border-0">
+                  <div key={entry.id} className="glass-card rounded-2xl flex items-center justify-between px-4 py-3.5">
                     <div>
-                      <p className="text-sm font-medium">
+                      <p className="text-sm font-medium flex items-center gap-2">
                         {format(parseISO(entry.date), 'EEE, MMM d')}
                         {entry.date === today && (
-                          <span className="ml-2 text-xs bg-primary/20 text-primary rounded-full px-2 py-0.5">Today</span>
+                          <span className="text-xs bg-primary/20 text-primary rounded-full px-2 py-0.5">Today</span>
                         )}
                       </p>
                       {entry.notes && (
@@ -83,9 +100,9 @@ export default async function WeightPage() {
                       )}
                     </div>
                     <div className="text-right">
-                      <span className="text-base font-bold tabular-nums">{Number(entry.weight_kg).toFixed(1)} kg</span>
+                      <span className="text-lg font-bold tabular-nums">{Number(entry.weight_kg).toFixed(1)} kg</span>
                       {diff !== null && (
-                        <p className={`text-xs tabular-nums ${
+                        <p className={`text-xs tabular-nums font-medium ${
                           diff < 0 ? 'text-primary' : diff > 0 ? 'text-red-400' : 'text-muted-foreground'
                         }`}>
                           {diff > 0 ? '+' : ''}{diff.toFixed(1)}

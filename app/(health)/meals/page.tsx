@@ -29,19 +29,19 @@ export default async function MealsPage() {
 
   const mealsByType = MEAL_TYPES.map(mt => ({
     ...mt,
-    entries: allMeals.filter(m => m.meal_type === mt.id),
+    entries: allMeals.filter(m => m.meal_type === (mt.id as MealType)),
   }));
 
   return (
     <div className="pb-4">
-      <div className="sticky top-0 bg-background/95 backdrop-blur border-b border-border px-4 py-4 z-10">
+      <div className="sticky top-0 bg-background/95 backdrop-blur border-b border-white/[0.07] px-4 py-4 z-10">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold">Today&apos;s Meals</h1>
             <p className="text-xs text-muted-foreground">{format(new Date(), 'EEEE, MMMM d')}</p>
           </div>
           <div className="text-right">
-            <p className="text-lg font-bold text-primary tabular-nums">{totalCal} kcal</p>
+            <p className="text-2xl font-bold gradient-text tabular-nums">{totalCal}</p>
             <p className="text-xs text-muted-foreground">{totalProtein}g protein</p>
           </div>
         </div>
@@ -58,24 +58,28 @@ export default async function MealsPage() {
 
         {mealsByType.map(({ id, label, emoji, time, entries }) => {
           if (entries.length === 0) return null;
+          const mealCal = Math.round(entries.reduce((s, m) => s + (m.calories ?? 0), 0));
           return (
-            <div key={id} className="bg-card rounded-2xl border border-border overflow-hidden">
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50">
-                <span>{emoji}</span>
+            <div key={id} className="glass-card rounded-2xl overflow-hidden">
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.05]">
+                <span className="text-base">{emoji}</span>
                 <span className="text-sm font-semibold">{label}</span>
                 <span className="text-xs text-muted-foreground ml-auto">{time}</span>
+                <span className="text-xs font-bold text-primary ml-2">{mealCal} kcal</span>
               </div>
               {entries.map(entry => (
-                <div key={entry.id} className="flex items-center gap-3 px-4 py-3 border-b border-border/30 last:border-0">
+                <div key={entry.id} className="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.04] last:border-0">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{entry.food_name ?? 'Unknown food'}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {entry.portion_g}g
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-muted-foreground">{entry.portion_g}g</span>
                       {entry.calories != null && (
-                        <> &middot; <span className="text-primary font-medium">{Math.round(entry.calories)} kcal</span></>
+                        <span className="text-xs text-primary font-semibold">{Math.round(entry.calories)} kcal</span>
                       )}
-                      {entry.protein_g != null && <> &middot; {entry.protein_g}g protein</>}
-                    </p>
+                      {entry.protein_g != null && (
+                        <span className="text-xs text-blue-400">{entry.protein_g}g P</span>
+                      )}
+                    </div>
                   </div>
                   <DeleteMealButton mealId={entry.id} />
                 </div>
@@ -86,7 +90,7 @@ export default async function MealsPage() {
 
         <Link
           href="/meals/log"
-          className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl border-2 border-dashed border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors text-sm font-medium"
+          className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl border border-dashed border-white/[0.10] text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors text-sm font-medium"
         >
           <Plus size={18} />
           Log another meal

@@ -45,35 +45,37 @@ export function WorkoutLogForm() {
   if (done) {
     const w = WORKOUT_TYPES.find((t) => t.id === type);
     return (
-      <div className="flex flex-col items-center gap-3 py-8">
-        <CheckCircle2 size={48} className="text-primary" />
+      <div className="flex flex-col items-center gap-3 py-10">
+        <div className="w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center">
+          <CheckCircle2 size={36} className="text-primary" />
+        </div>
         <p className="text-lg font-bold">Workout logged!</p>
         <p className="text-sm text-muted-foreground">
-          {w?.emoji} {w?.label} · {finalDuration} min
+          {w?.emoji} {w?.label} &middot; {finalDuration} min
         </p>
       </div>
     );
   }
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-5">
       {/* Type */}
       <div>
-        <p className="text-sm font-medium text-muted-foreground mb-3">Workout Type</p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">Workout Type</p>
         <div className="grid grid-cols-3 gap-2">
           {WORKOUT_TYPES.map((wt) => (
             <button
               key={wt.id}
               type="button"
               onClick={() => setType(wt.id)}
-              className={`flex flex-col items-center gap-1.5 py-3.5 rounded-2xl border text-sm font-medium transition-all ${
+              className={`flex flex-col items-center gap-1.5 py-4 rounded-2xl border text-sm font-medium transition-all ${
                 type === wt.id
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border bg-card text-muted-foreground hover:border-primary/40'
+                  ? 'border-primary/50 bg-primary/10 text-primary shadow-[0_0_12px_rgba(34,197,94,0.1)]'
+                  : 'border-white/[0.06] bg-white/[0.02] text-muted-foreground hover:border-primary/20'
               }`}
             >
               <span className="text-2xl">{wt.emoji}</span>
-              <span className="text-xs">{wt.label}</span>
+              <span className="text-xs font-medium">{wt.label}</span>
             </button>
           ))}
         </div>
@@ -81,17 +83,17 @@ export function WorkoutLogForm() {
 
       {/* Duration */}
       <div>
-        <p className="text-sm font-medium text-muted-foreground mb-3">Duration (minutes)</p>
-        <div className="grid grid-cols-3 gap-2 mb-3">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">Duration</p>
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-0.5">
           {DURATIONS.map((d) => (
             <button
               key={d}
               type="button"
               onClick={() => { setDuration(d); setCustomDuration(''); }}
-              className={`py-2.5 rounded-xl border text-sm font-bold transition-all ${
+              className={`flex-shrink-0 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all ${
                 duration === d && !customDuration
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border bg-card text-muted-foreground hover:border-primary/40'
+                  ? 'border-primary/50 bg-primary/10 text-primary shadow-[0_0_8px_rgba(34,197,94,0.1)]'
+                  : 'border-white/[0.06] bg-white/[0.02] text-muted-foreground hover:border-primary/20'
               }`}
             >
               {d}m
@@ -100,22 +102,22 @@ export function WorkoutLogForm() {
         </div>
         <input
           type="number"
-          placeholder="Custom (e.g. 50)"
+          placeholder="Custom duration (minutes)"
           value={customDuration}
           onChange={(e) => { setCustomDuration(e.target.value); }}
-          className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+          className="mt-2.5 w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/50"
         />
       </div>
 
       {/* Notes */}
       <div>
-        <p className="text-sm font-medium text-muted-foreground mb-2">Notes (optional)</p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">Notes (optional)</p>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="e.g. Chest & back, 5km run, felt strong..."
           rows={2}
-          className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+          className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/50 resize-none"
         />
       </div>
 
@@ -127,10 +129,10 @@ export function WorkoutLogForm() {
         type="button"
         onClick={handleSubmit}
         disabled={isPending}
-        className={`w-full py-4 rounded-2xl font-semibold text-sm transition-all ${
+        className={`w-full py-4 rounded-2xl font-bold text-sm transition-all active:scale-[0.98] ${
           isPending
-            ? 'bg-muted text-muted-foreground cursor-not-allowed'
-            : 'bg-primary text-primary-foreground hover:opacity-90 active:scale-[0.98]'
+            ? 'bg-white/[0.04] text-muted-foreground cursor-not-allowed'
+            : 'bg-primary text-primary-foreground shadow-[0_4px_20px_rgba(34,197,94,0.3)] hover:opacity-90'
         }`}
       >
         {isPending ? 'Logging...' : 'Log Workout'}

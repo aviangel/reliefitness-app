@@ -85,14 +85,14 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className="flex items-start justify-between pt-2">
         <div>
-          <h1 className="text-2xl font-bold">Hey, {p.name} 👋</h1>
+          <h1 className="text-2xl font-bold gradient-text">Hey, {p.name} 👋</h1>
           <p className="text-sm text-muted-foreground">{dateLabel}</p>
         </div>
         <div className="flex items-center gap-1">
-          <Link href="/stats" className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+          <Link href="/stats" className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-colors">
             <BarChart2 size={19} />
           </Link>
-          <Link href="/settings" className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+          <Link href="/settings" className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-colors">
             <Settings size={19} />
           </Link>
           <Link
@@ -100,7 +100,7 @@ export default async function DashboardPage() {
             className={`flex flex-col items-center rounded-2xl px-3.5 py-2 border transition-colors ml-1 ${
               todayHasWeight
                 ? 'bg-primary/10 border-primary/30'
-                : 'bg-card border-border hover:border-primary/30'
+                : 'glass-card hover:border-primary/30'
             }`}
           >
             <span className="text-base font-bold tabular-nums leading-tight">{Number(currentWeight).toFixed(1)}</span>
@@ -110,7 +110,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Calorie ring + macros */}
-      <div className="bg-card rounded-3xl border border-border p-5 flex flex-col items-center gap-5">
+      <div className="glass-card rounded-3xl p-5 flex flex-col items-center gap-5 shadow-[0_0_40px_rgba(34,197,94,0.04)]">
         <CalorieRing calories={totalCalories} goal={Number(p.calorie_goal)} />
         <MacrosBars
           protein={totalProtein} proteinGoal={Number(p.protein_goal_g)}
@@ -121,13 +121,13 @@ export default async function DashboardPage() {
 
       {/* Weight goal + Water row */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-card rounded-2xl border border-border p-4">
+        <div className="glass-card rounded-2xl p-4">
           <div className="flex items-center gap-1.5 mb-2">
             <TrendingDown size={14} className="text-primary" />
             <span className="text-xs font-semibold">Weight Goal</span>
           </div>
           <p className="text-xs text-muted-foreground mb-2">{kgToGo.toFixed(1)} kg to go</p>
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
+          <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
             <div
               className="h-full rounded-full bg-primary transition-all duration-700"
               style={{ width: `${goalProgress}%` }}
@@ -139,17 +139,17 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        <Link href="/drinks" className="bg-card rounded-2xl border border-border p-4 hover:border-blue-500/30 transition-colors">
+        <Link href="/drinks" className="glass-card rounded-2xl p-4 hover:border-blue-500/30 transition-colors block">
           <div className="flex items-center gap-1.5 mb-2">
             <Droplets size={14} className="text-blue-400" />
             <span className="text-xs font-semibold">Water</span>
           </div>
-          <p className="text-lg font-bold tabular-nums text-blue-400">
+          <p className="text-xl font-bold tabular-nums text-blue-400">
             {totalWaterMl >= 1000 ? `${(totalWaterMl / 1000).toFixed(1)}L` : `${totalWaterMl}ml`}
           </p>
-          <div className="h-2 bg-muted rounded-full overflow-hidden mt-2">
+          <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden mt-2">
             <div
-              className="h-full rounded-full bg-blue-500 transition-all duration-700"
+              className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-700"
               style={{ width: `${waterPct * 100}%` }}
             />
           </div>
@@ -161,20 +161,20 @@ export default async function DashboardPage() {
       {workouts.length > 0 ? (
         <Link
           href="/workout"
-          className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-2xl px-4 py-3 hover:bg-primary/10 transition-colors"
+          className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-2xl px-4 py-3.5 hover:bg-primary/10 transition-colors"
         >
           <span className="text-xl">{TYPE_EMOJI[workouts[0].type] ?? '💪'}</span>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-primary">Workout done today! 🔥</p>
             <p className="text-xs text-muted-foreground">
-              {workouts.map((w) => w.type).join(', ')} · {totalWorkoutMin} min total
+              {workouts.map((w) => w.type).join(', ')} &middot; {totalWorkoutMin} min total
             </p>
           </div>
         </Link>
       ) : (
         <Link
           href="/workout"
-          className="flex items-center gap-3 bg-card border border-dashed border-border rounded-2xl px-4 py-3 hover:border-primary/30 transition-colors"
+          className="flex items-center gap-3 glass-card rounded-2xl px-4 py-3.5 hover:border-primary/30 transition-colors border-dashed"
         >
           <Dumbbell size={18} className="text-muted-foreground" />
           <span className="text-sm text-muted-foreground flex-1">No workout logged today</span>
@@ -198,7 +198,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 gap-3 pb-6">
         <Link
           href="/weight"
-          className="flex items-center gap-3 bg-card border border-border rounded-2xl p-4 hover:border-primary/30 transition-colors"
+          className="flex items-center gap-3 glass-card rounded-2xl p-4 hover:border-primary/20 transition-colors"
         >
           <Scale size={20} className="text-primary shrink-0" />
           <div>
@@ -208,7 +208,7 @@ export default async function DashboardPage() {
         </Link>
         <Link
           href="/meals/log"
-          className="flex items-center gap-3 bg-primary/10 border border-primary/30 rounded-2xl p-4 hover:bg-primary/15 transition-colors"
+          className="flex items-center gap-3 bg-primary/10 border border-primary/30 rounded-2xl p-4 hover:bg-primary/15 transition-colors shadow-[0_0_20px_rgba(34,197,94,0.08)]"
         >
           <Plus size={20} className="text-primary shrink-0" />
           <div>

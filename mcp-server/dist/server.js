@@ -84,6 +84,24 @@ export function createMcpServer(supabase, userId) {
                 },
             },
             {
+                name: 'add_food',
+                description: 'Add a new food to the permanent database. Use this when the user mentions a food not in list_foods — research its nutritional values first, then add it. Supports any food: restaurant dishes, branded products, home-cooked meals, etc.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        name: { type: 'string', description: 'Food name in English.' },
+                        name_he: { type: 'string', description: 'Hebrew name if known.' },
+                        category: { type: 'string', enum: ['home_meals', 'junk_food', 'israeli_sweets', 'drinks', 'other'] },
+                        calories_per_100g: { type: 'number' },
+                        protein_per_100g: { type: 'number' },
+                        carbs_per_100g: { type: 'number' },
+                        fat_per_100g: { type: 'number' },
+                        default_portion_g: { type: 'number', description: 'Typical serving in grams/ml.' },
+                    },
+                    required: ['name', 'category', 'calories_per_100g', 'protein_per_100g', 'carbs_per_100g', 'fat_per_100g', 'default_portion_g'],
+                },
+            },
+            {
                 name: 'log_meal',
                 description: 'Log a meal. Call list_foods first — food_name must be an exact match.',
                 inputSchema: {
@@ -98,6 +116,24 @@ export function createMcpServer(supabase, userId) {
                         date: { type: 'string', description: 'YYYY-MM-DD. Omit for today.' },
                     },
                     required: ['food_name', 'meal_type'],
+                },
+            },
+            {
+                name: 'log_meal_direct',
+                description: 'Log a meal with explicit nutritional values — use when the exact food is not in the database and you know the nutrition. Does NOT add the food permanently.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        food_name: { type: 'string', description: 'Display name for this entry.' },
+                        meal_type: { type: 'string', enum: ['breakfast', 'commute_am', 'lunch', 'commute_pm', 'dinner', 'snack'] },
+                        calories: { type: 'number' },
+                        protein_g: { type: 'number' },
+                        carbs_g: { type: 'number' },
+                        fat_g: { type: 'number' },
+                        portion_g: { type: 'number', description: 'Actual portion in grams.' },
+                        date: { type: 'string', description: 'YYYY-MM-DD. Omit for today.' },
+                    },
+                    required: ['food_name', 'meal_type', 'calories', 'protein_g', 'carbs_g', 'fat_g', 'portion_g'],
                 },
             },
             {
@@ -321,7 +357,7 @@ export function createMcpServer(supabase, userId) {
                                         days_under_goal: Object.values(dayTotals).filter((c) => c <= (p?.calorie_goal ?? 2000)).length,
                                     },
                                     weight: { entries: weights.map((w) => ({ date: w.date, weight_kg: Number(w.weight_kg) })), change_kg: ws.length > 1 ? round1(ws[ws.length - 1] - ws[0]) : null },
-                                    workouts: { sessions: workouts.length, total_minutes: workouts.reduce((s, w) => s + (w.duration_minutes ?? 0), 0), types: [...new Set(workouts.map((w) => w.type))] },
+                                    workouts: { sessions: workouts.length, total_minutes: workouts.reduce((s, w) => s + (w.duration_minutes ?? 0), 0), types: Array.from(new Set(workouts.map((w) => w.type))) },
                                 }, null, 2),
                             }],
                     };
@@ -365,6 +401,75 @@ export function createMcpServer(supabase, userId) {
                                     logged: true, id: inserted?.id, food: food.name, meal_type: a.meal_type,
                                     portion_g: portionG, calories: Math.round(food.calories_per_100g * f),
                                     protein_g: round1(food.protein_per_100g * f), carbs_g: round1(food.carbs_per_100g * f), fat_g: round1(food.fat_per_100g * f),
+                                }, null, 2),
+                            }],
+                    };
+                }
+                case 'add_food': {
+                    const { data: existing } = await supabase.from('foods').select('name').ilike('name', a.name).limit(1);
+                    if (existing?.length) {
+                        return { content: [{ type: 'text', text: `Food "${a.name}" already exists. Use log_meal with this exact name.` }] };
+                    }
+                    const portionG = a.default_portion_g;
+                    const f = portionG / 100;
+                    const { error } = await supabase.from('foods').insert({
+                        name: a.name,
+                        name_he: a.name_he ?? null,
+                        category: a.category,
+                        calories_per_100g: a.calories_per_100g,
+                        protein_per_100g: a.protein_per_100g,
+                        carbs_per_100g: a.carbs_per_100g,
+                        fat_per_100g: a.fat_per_100g,
+                        default_portion_g: portionG,
+                        is_active: true,
+                    });
+                    if (error)
+                        throw error;
+                    return {
+                        content: [{
+                                type: 'text', text: JSON.stringify({
+                                    added: true,
+                                    name: a.name,
+                                    category: a.category,
+                                    per_default_portion: {
+                                        calories: Math.round(a.calories_per_100g * f),
+                                        protein_g: round1(a.protein_per_100g * f),
+                                        carbs_g: round1(a.carbs_per_100g * f),
+                                        fat_g: round1(a.fat_per_100g * f),
+                                    },
+                                    next_step: 'Food saved. Now call log_meal with this exact name.',
+                                }, null, 2),
+                            }],
+                    };
+                }
+                case 'log_meal_direct': {
+                    const { data: inserted, error } = await supabase.from('meals_log').insert({
+                        user_id: userId,
+                        date: a.date ?? today(),
+                        meal_type: a.meal_type,
+                        food_name: a.food_name,
+                        portion_g: a.portion_g,
+                        calories: a.calories,
+                        protein_g: a.protein_g,
+                        carbs_g: a.carbs_g,
+                        fat_g: a.fat_g,
+                        status: 'eaten',
+                    }).select('id').single();
+                    if (error)
+                        throw error;
+                    return {
+                        content: [{
+                                type: 'text', text: JSON.stringify({
+                                    logged: true,
+                                    id: inserted?.id,
+                                    food_name: a.food_name,
+                                    meal_type: a.meal_type,
+                                    date: a.date ?? today(),
+                                    portion_g: a.portion_g,
+                                    calories: a.calories,
+                                    protein_g: a.protein_g,
+                                    carbs_g: a.carbs_g,
+                                    fat_g: a.fat_g,
                                 }, null, 2),
                             }],
                     };
