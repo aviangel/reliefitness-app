@@ -36,6 +36,9 @@ const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!, {
 
 const app = express();
 
+// Trust Railway's reverse proxy so req.protocol returns 'https'
+app.set('trust proxy', true);
+
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'OPTIONS'],
@@ -69,14 +72,12 @@ app.get('/.well-known/oauth-authorization-server', (req, res) => {
 app.post('/oauth/register', (req, res) => {
   const meta = req.body ?? {};
   const clientId = crypto.randomBytes(8).toString('hex');
+  // Echo back all provided metadata per RFC 7591, then add server-assigned fields
   res.status(201).json({
+    ...meta,
     client_id: clientId,
     client_id_issued_at: Math.floor(Date.now() / 1000),
-    redirect_uris: meta.redirect_uris ?? [],
-    grant_types: meta.grant_types ?? ['authorization_code'],
-    response_types: meta.response_types ?? ['code'],
-    token_endpoint_auth_method: 'none',
-    ...(meta.client_name ? { client_name: meta.client_name } : {}),
+    token_endpoint_auth_method: meta.token_endpoint_auth_method ?? 'none',
   });
 });
 
