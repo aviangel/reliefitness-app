@@ -57,10 +57,26 @@ app.get('/.well-known/oauth-authorization-server', (req, res) => {
     issuer: base,
     authorization_endpoint: `${base}/oauth/authorize`,
     token_endpoint: `${base}/oauth/token`,
+    registration_endpoint: `${base}/oauth/register`,
     response_types_supported: ['code'],
     grant_types_supported: ['authorization_code'],
     code_challenge_methods_supported: ['S256'],
     scopes_supported: ['health:read', 'health:write'],
+  });
+});
+
+// Dynamic client registration (RFC 7591) — claude.ai calls this before starting OAuth
+app.post('/oauth/register', (req, res) => {
+  const meta = req.body ?? {};
+  const clientId = crypto.randomBytes(8).toString('hex');
+  res.status(201).json({
+    client_id: clientId,
+    client_id_issued_at: Math.floor(Date.now() / 1000),
+    redirect_uris: meta.redirect_uris ?? [],
+    grant_types: meta.grant_types ?? ['authorization_code'],
+    response_types: meta.response_types ?? ['code'],
+    token_endpoint_auth_method: 'none',
+    ...(meta.client_name ? { client_name: meta.client_name } : {}),
   });
 });
 
