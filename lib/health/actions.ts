@@ -103,3 +103,64 @@ export async function updateGoals(
   revalidatePath('/settings');
   revalidatePath('/dashboard');
 }
+
+export async function logDrink(type: 'water' | 'zero' | 'diet_coke', amountMl: number) {
+  const supabase = createClient() as any;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { error } = await supabase.from('drinks_log').insert({
+    user_id: user.id,
+    date: new Date().toISOString().split('T')[0],
+    type,
+    amount_ml: amountMl,
+  });
+
+  if (error) throw error;
+  revalidatePath('/dashboard');
+  revalidatePath('/drinks');
+}
+
+export async function deleteDrink(id: string) {
+  const supabase = createClient() as any;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  await supabase.from('drinks_log').delete().eq('id', id).eq('user_id', user.id);
+  revalidatePath('/dashboard');
+  revalidatePath('/drinks');
+}
+
+export async function logWorkout(
+  type: string,
+  durationMinutes: number,
+  notes?: string,
+  caloriesBurned?: number
+) {
+  const supabase = createClient() as any;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { error } = await supabase.from('workout_log').insert({
+    user_id: user.id,
+    date: new Date().toISOString().split('T')[0],
+    type,
+    duration_minutes: durationMinutes,
+    calories_burned: caloriesBurned || null,
+    notes: notes || null,
+  });
+
+  if (error) throw error;
+  revalidatePath('/dashboard');
+  revalidatePath('/workout');
+}
+
+export async function deleteWorkout(id: string) {
+  const supabase = createClient() as any;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  await supabase.from('workout_log').delete().eq('id', id).eq('user_id', user.id);
+  revalidatePath('/dashboard');
+  revalidatePath('/workout');
+}
