@@ -100,6 +100,7 @@ export type Database = {
           meal_type: string;
           food_id: string | null;
           food_name: string | null;
+          food_name_he: string | null;
           portion_g: number;
           calories: number | null;
           protein_g: number | null;
@@ -117,6 +118,7 @@ export type Database = {
           meal_type: string;
           food_id?: string | null;
           food_name?: string | null;
+          food_name_he?: string | null;
           portion_g?: number;
           calories?: number | null;
           protein_g?: number | null;
@@ -134,6 +136,7 @@ export type Database = {
           meal_type?: string;
           food_id?: string | null;
           food_name?: string | null;
+          food_name_he?: string | null;
           portion_g?: number;
           calories?: number | null;
           protein_g?: number | null;

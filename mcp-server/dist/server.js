@@ -124,7 +124,8 @@ export function createMcpServer(supabase, userId) {
                 inputSchema: {
                     type: 'object',
                     properties: {
-                        food_name: { type: 'string', description: 'Display name for this entry.' },
+                        food_name: { type: 'string', description: 'Display name for this entry (English).' },
+                        food_name_he: { type: 'string', description: 'Hebrew display name — provide so the app shows the right name in Hebrew mode.' },
                         meal_type: { type: 'string', enum: ['breakfast', 'commute_am', 'lunch', 'commute_pm', 'dinner', 'snack'] },
                         calories: { type: 'number' },
                         protein_g: { type: 'number' },
@@ -388,7 +389,7 @@ export function createMcpServer(supabase, userId) {
                     const f = portionG / 100;
                     const { data: inserted, error } = await supabase.from('meals_log').insert({
                         user_id: userId, date: a.date ?? today(), meal_type: a.meal_type,
-                        food_name: food.name, portion_g: portionG,
+                        food_id: food.id, food_name: food.name, food_name_he: food.name_he ?? null, portion_g: portionG,
                         calories: Math.round(food.calories_per_100g * f),
                         protein_g: round1(food.protein_per_100g * f), carbs_g: round1(food.carbs_per_100g * f), fat_g: round1(food.fat_per_100g * f),
                         status: 'eaten',
@@ -443,11 +444,16 @@ export function createMcpServer(supabase, userId) {
                     };
                 }
                 case 'log_meal_direct': {
+                    const directName = typeof a.food_name === 'string' ? a.food_name.trim() : '';
+                    if (!directName) {
+                        return { content: [{ type: 'text', text: 'food_name is required and cannot be empty. Provide the display name of the food being logged.' }], isError: true };
+                    }
                     const { data: inserted, error } = await supabase.from('meals_log').insert({
                         user_id: userId,
                         date: a.date ?? today(),
                         meal_type: a.meal_type,
-                        food_name: a.food_name,
+                        food_name: directName,
+                        food_name_he: a.food_name_he ?? null,
                         portion_g: a.portion_g,
                         calories: a.calories,
                         protein_g: a.protein_g,
@@ -462,7 +468,7 @@ export function createMcpServer(supabase, userId) {
                                 type: 'text', text: JSON.stringify({
                                     logged: true,
                                     id: inserted?.id,
-                                    food_name: a.food_name,
+                                    food_name: directName,
                                     meal_type: a.meal_type,
                                     date: a.date ?? today(),
                                     portion_g: a.portion_g,

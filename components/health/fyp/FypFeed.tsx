@@ -30,7 +30,7 @@ const grad = (dark: string, light: string): Grad => ({ dark, light });
 
 const PANELS = 6;
 // Transition duration in ms — controls swipe speed feel
-const TRANSITION_MS = 420;
+const TRANSITION_MS = 320;
 
 export function FypFeed(d: FypData) {
   const { t } = useI18n();

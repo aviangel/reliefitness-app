@@ -24,7 +24,7 @@ export default async function MealsPage() {
 
   const { data: meals } = await supabase
     .from('meals_log')
-    .select('id,meal_type,food_name,portion_g,calories,protein_g,carbs_g,fat_g,status,logged_at')
+    .select('id,meal_type,food_name,food_name_he,portion_g,calories,protein_g,carbs_g,fat_g,status,logged_at')
     .eq('user_id', user.id)
     .eq('date', today)
     .order('logged_at');
@@ -100,7 +100,7 @@ export default async function MealsPage() {
               {entries.map(entry => (
                 <div key={entry.id} className="flex items-center gap-3 px-4 py-3.5 border-b border-border last:border-0">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate">{entry.food_name ?? t('meals.unknownFood')}</p>
+                    <p className="text-sm font-semibold truncate">{(lang === 'he' && entry.food_name_he) || entry.food_name || t('meals.unknownFood')}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-[11px] text-muted-foreground">{entry.portion_g}g</span>
                       {entry.calories != null && (

@@ -32,6 +32,7 @@ export interface MealLogEntry {
   meal_type: MealType;
   food_id: string | null;
   food_name: string | null;
+  food_name_he: string | null;
   portion_g: number;
   calories: number | null;
   protein_g: number | null;

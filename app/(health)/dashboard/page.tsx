@@ -33,7 +33,7 @@ export default async function DashboardPage() {
   const [mealsRes, profileRes, weightRes, drinksRes, workoutRes] = await Promise.all([
     supabase
       .from('meals_log')
-      .select('id,meal_type,food_name,portion_g,calories,protein_g,carbs_g,fat_g,status,logged_at')
+      .select('id,meal_type,food_name,food_name_he,portion_g,calories,protein_g,carbs_g,fat_g,status,logged_at')
       .eq('user_id', user.id)
       .eq('date', today)
       .order('logged_at'),
@@ -87,7 +87,11 @@ export default async function DashboardPage() {
     protein: totalProtein, proteinGoal: Number(p.protein_goal_g),
     carbs: totalCarbs, carbsGoal: Number(p.carbs_goal_g),
     fat: totalFat, fatGoal: Number(p.fat_goal_g),
-    meals: allMeals.map((m) => ({ meal_type: m.meal_type, food_name: m.food_name, calories: m.calories })),
+    meals: allMeals.map((m) => ({
+      meal_type: m.meal_type,
+      food_name: lang === 'he' && m.food_name_he ? m.food_name_he : m.food_name,
+      calories: m.calories,
+    })),
     waterMl: totalWaterMl,
     waterGoalMl: WATER_GOAL_ML,
     currentWeight: Number(currentWeight),

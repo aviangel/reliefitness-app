@@ -23,6 +23,7 @@ export async function logMeal(formData: FormData) {
     user_id: user.id,
     meal_type: mealType,
     food_name: food.name,
+    food_name_he: food.name_he ?? null,
     portion_g: portionG,
     calories: Math.round(food.calories_per_100g * factor),
     protein_g: Math.round(food.protein_per_100g * factor * 10) / 10,
