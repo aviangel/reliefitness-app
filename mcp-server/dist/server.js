@@ -202,7 +202,7 @@ export function createMcpServer(supabase, userId) {
             },
             {
                 name: 'update_goals',
-                description: 'Update daily nutrition goals.',
+                description: 'Update daily nutrition and hydration goals.',
                 inputSchema: {
                     type: 'object',
                     properties: {
@@ -210,7 +210,77 @@ export function createMcpServer(supabase, userId) {
                         protein_goal_g: { type: 'number' },
                         carbs_goal_g: { type: 'number' },
                         fat_goal_g: { type: 'number' },
+                        water_goal_ml: { type: 'number', description: 'Daily water target in ml.' },
                     },
+                    required: [],
+                },
+            },
+            {
+                name: 'log_sleep',
+                description: "Log a night's sleep for a day. Upserts (one entry per date).",
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        hours: { type: 'number', description: 'Hours slept (e.g. 7.5).' },
+                        quality: { type: 'number', description: 'Quality 1 (poor) to 5 (great).' },
+                        notes: { type: 'string' },
+                        date: { type: 'string', description: 'YYYY-MM-DD. Omit for today.' },
+                    },
+                    required: ['hours'],
+                },
+            },
+            {
+                name: 'get_sleep',
+                description: 'Get recent sleep history.',
+                inputSchema: {
+                    type: 'object',
+                    properties: { limit: { type: 'number', description: 'Default 14.' } },
+                    required: [],
+                },
+            },
+            {
+                name: 'log_measurement',
+                description: 'Log body measurements (cm) for a day. Upserts. Provide any subset.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        waist_cm: { type: 'number' },
+                        chest_cm: { type: 'number' },
+                        hips_cm: { type: 'number' },
+                        arm_cm: { type: 'number' },
+                        notes: { type: 'string' },
+                        date: { type: 'string', description: 'YYYY-MM-DD. Omit for today.' },
+                    },
+                    required: [],
+                },
+            },
+            {
+                name: 'get_measurements',
+                description: 'Get recent body measurement history.',
+                inputSchema: {
+                    type: 'object',
+                    properties: { limit: { type: 'number', description: 'Default 14.' } },
+                    required: [],
+                },
+            },
+            {
+                name: 'log_steps',
+                description: 'Log daily step count. Upserts (one entry per date).',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        steps: { type: 'number' },
+                        date: { type: 'string', description: 'YYYY-MM-DD. Omit for today.' },
+                    },
+                    required: ['steps'],
+                },
+            },
+            {
+                name: 'get_steps',
+                description: 'Get recent daily step history.',
+                inputSchema: {
+                    type: 'object',
+                    properties: { limit: { type: 'number', description: 'Default 14.' } },
                     required: [],
                 },
             },
@@ -223,35 +293,46 @@ export function createMcpServer(supabase, userId) {
             switch (name) {
                 case 'get_today': {
                     const d = today();
-                    const [profileRes, mealsRes, weightRes, drinksRes, workoutsRes] = await Promise.all([
+                    const [profileRes, mealsRes, weightRes, drinksRes, workoutsRes, sleepRes, stepsRes] = await Promise.all([
                         supabase.from('user_profile').select('*').eq('user_id', userId).single(),
                         supabase.from('meals_log').select('*').eq('user_id', userId).eq('date', d).order('logged_at'),
                         supabase.from('weight_log').select('weight_kg,date').eq('user_id', userId).order('date', { ascending: false }).limit(2),
                         supabase.from('drinks_log').select('type,amount_ml').eq('user_id', userId).eq('date', d),
-                        supabase.from('workout_log').select('type,duration_minutes,notes').eq('user_id', userId).eq('date', d),
+                        supabase.from('workout_log').select('type,duration_minutes,calories_burned,notes').eq('user_id', userId).eq('date', d),
+                        supabase.from('sleep_log').select('hours,quality').eq('user_id', userId).eq('date', d).maybeSingle(),
+                        supabase.from('steps_log').select('steps').eq('user_id', userId).eq('date', d).maybeSingle(),
                     ]);
                     const p = profileRes.data;
                     const meals = (mealsRes.data ?? []);
                     const weights = (weightRes.data ?? []);
                     const drinks = (drinksRes.data ?? []);
                     const workouts = (workoutsRes.data ?? []);
+                    const sleep = sleepRes.data;
+                    const steps = stepsRes.data;
                     const totalCal = Math.round(meals.reduce((s, m) => s + (m.calories ?? 0), 0));
+                    const totalBurned = workouts.reduce((s, w) => s + (w.calories_burned ?? 0), 0);
                     const totalWater = drinks.filter((x) => x.type === 'water').reduce((s, x) => s + x.amount_ml, 0);
+                    const waterGoal = p?.water_goal_ml ?? 2500;
                     return {
                         content: [{
                                 type: 'text', text: JSON.stringify({
                                     date: d,
-                                    calories: { eaten: totalCal, goal: p?.calorie_goal ?? 2000, remaining: (p?.calorie_goal ?? 2000) - totalCal },
+                                    calories: {
+                                        eaten: totalCal, goal: p?.calorie_goal ?? 2000, remaining: (p?.calorie_goal ?? 2000) - totalCal,
+                                        burned: totalBurned, net: totalCal - totalBurned,
+                                    },
                                     macros: {
                                         protein: { eaten: round1(meals.reduce((s, m) => s + (m.protein_g ?? 0), 0)), goal: p?.protein_goal_g ?? 150 },
                                         carbs: { eaten: round1(meals.reduce((s, m) => s + (m.carbs_g ?? 0), 0)), goal: p?.carbs_goal_g ?? 200 },
                                         fat: { eaten: round1(meals.reduce((s, m) => s + (m.fat_g ?? 0), 0)), goal: p?.fat_goal_g ?? 65 },
                                     },
                                     meals_logged: meals.length,
-                                    water_ml: totalWater, water_goal_ml: 2500, water_remaining_ml: Math.max(0, 2500 - totalWater),
+                                    water_ml: totalWater, water_goal_ml: waterGoal, water_remaining_ml: Math.max(0, waterGoal - totalWater),
                                     weight: { current_kg: weights[0] ? Number(weights[0].weight_kg) : null, logged_today: weights[0]?.date === d },
-                                    workouts: workouts.map((w) => ({ type: w.type, duration_minutes: w.duration_minutes, notes: w.notes })),
+                                    workouts: workouts.map((w) => ({ type: w.type, duration_minutes: w.duration_minutes, calories_burned: w.calories_burned, notes: w.notes })),
                                     total_workout_minutes: workouts.reduce((s, w) => s + (w.duration_minutes ?? 0), 0),
+                                    sleep: sleep ? { hours: Number(sleep.hours), quality: sleep.quality } : null,
+                                    steps: steps ? steps.steps : null,
                                 }, null, 2),
                             }],
                     };
@@ -318,7 +399,7 @@ export function createMcpServer(supabase, userId) {
                                     name: p.name, height_cm: p.height_cm,
                                     current_weight_kg: Number(p.current_weight_kg), target_weight_kg: Number(p.target_weight_kg),
                                     to_lose_kg: round1(Number(p.current_weight_kg) - Number(p.target_weight_kg)),
-                                    goals: { calorie_goal: p.calorie_goal, protein_goal_g: p.protein_goal_g, carbs_goal_g: p.carbs_goal_g, fat_goal_g: p.fat_goal_g },
+                                    goals: { calorie_goal: p.calorie_goal, protein_goal_g: p.protein_goal_g, carbs_goal_g: p.carbs_goal_g, fat_goal_g: p.fat_goal_g, water_goal_ml: p.water_goal_ml ?? 2500 },
                                 }, null, 2),
                             }],
                     };
@@ -534,10 +615,53 @@ export function createMcpServer(supabase, userId) {
                         updates.carbs_goal_g = a.carbs_goal_g;
                     if (a.fat_goal_g != null)
                         updates.fat_goal_g = a.fat_goal_g;
+                    if (a.water_goal_ml != null)
+                        updates.water_goal_ml = a.water_goal_ml;
                     const { error } = await supabase.from('user_profile').update(updates).eq('user_id', userId);
                     if (error)
                         throw error;
                     return { content: [{ type: 'text', text: `Goals updated: ${JSON.stringify(updates)}` }] };
+                }
+                case 'log_sleep': {
+                    const { error } = await supabase.from('sleep_log').upsert({ user_id: userId, date: a.date ?? today(), hours: a.hours, quality: a.quality ?? null, notes: a.notes ?? null }, { onConflict: 'user_id,date' });
+                    if (error)
+                        throw error;
+                    return { content: [{ type: 'text', text: `Logged ${a.hours}h of sleep${a.quality ? ` (quality ${a.quality}/5)` : ''}.` }] };
+                }
+                case 'get_sleep': {
+                    const { data } = await supabase.from('sleep_log').select('id,date,hours,quality,notes').eq('user_id', userId).order('date', { ascending: false }).limit(a.limit ?? 14);
+                    return { content: [{ type: 'text', text: JSON.stringify(data ?? [], null, 2) }] };
+                }
+                case 'log_measurement': {
+                    const row = { user_id: userId, date: a.date ?? today() };
+                    if (a.waist_cm != null)
+                        row.waist_cm = a.waist_cm;
+                    if (a.chest_cm != null)
+                        row.chest_cm = a.chest_cm;
+                    if (a.hips_cm != null)
+                        row.hips_cm = a.hips_cm;
+                    if (a.arm_cm != null)
+                        row.arm_cm = a.arm_cm;
+                    if (a.notes != null)
+                        row.notes = a.notes;
+                    const { error } = await supabase.from('measurements_log').upsert(row, { onConflict: 'user_id,date' });
+                    if (error)
+                        throw error;
+                    return { content: [{ type: 'text', text: `Measurements logged for ${row.date}.` }] };
+                }
+                case 'get_measurements': {
+                    const { data } = await supabase.from('measurements_log').select('id,date,waist_cm,chest_cm,hips_cm,arm_cm,notes').eq('user_id', userId).order('date', { ascending: false }).limit(a.limit ?? 14);
+                    return { content: [{ type: 'text', text: JSON.stringify(data ?? [], null, 2) }] };
+                }
+                case 'log_steps': {
+                    const { error } = await supabase.from('steps_log').upsert({ user_id: userId, date: a.date ?? today(), steps: a.steps }, { onConflict: 'user_id,date' });
+                    if (error)
+                        throw error;
+                    return { content: [{ type: 'text', text: `Logged ${a.steps} steps.` }] };
+                }
+                case 'get_steps': {
+                    const { data } = await supabase.from('steps_log').select('id,date,steps').eq('user_id', userId).order('date', { ascending: false }).limit(a.limit ?? 14);
+                    return { content: [{ type: 'text', text: JSON.stringify(data ?? [], null, 2) }] };
                 }
                 default:
                     throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);

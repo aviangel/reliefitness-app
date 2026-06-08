@@ -82,7 +82,8 @@ export async function updateGoals(
   calorieGoal: number,
   proteinGoal: number,
   carbsGoal: number,
-  fatGoal: number
+  fatGoal: number,
+  waterGoalMl?: number
 ) {
   const supabase = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
@@ -95,6 +96,7 @@ export async function updateGoals(
       protein_goal_g: proteinGoal,
       carbs_goal_g: carbsGoal,
       fat_goal_g: fatGoal,
+      ...(waterGoalMl != null ? { water_goal_ml: waterGoalMl } : {}),
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'user_id' }
@@ -164,4 +166,91 @@ export async function deleteWorkout(id: string) {
   await supabase.from('workout_log').delete().eq('id', id).eq('user_id', user.id);
   revalidatePath('/dashboard');
   revalidatePath('/workout');
+}
+
+export async function deleteSlip(id: string) {
+  const supabase = createClient() as any;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  await supabase.from('slip_log').delete().eq('id', id).eq('user_id', user.id);
+  revalidatePath('/slips');
+  revalidatePath('/dashboard');
+}
+
+export async function logSleep(hours: number, quality?: number, notes?: string) {
+  const supabase = createClient() as any;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const today = new Date().toISOString().split('T')[0];
+  const { error } = await supabase.from('sleep_log').upsert(
+    { user_id: user.id, date: today, hours, quality: quality ?? null, notes: notes || null },
+    { onConflict: 'user_id,date' }
+  );
+
+  if (error) throw error;
+  revalidatePath('/sleep');
+  revalidatePath('/dashboard');
+}
+
+export async function deleteSleep(id: string) {
+  const supabase = createClient() as any;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  await supabase.from('sleep_log').delete().eq('id', id).eq('user_id', user.id);
+  revalidatePath('/sleep');
+}
+
+export async function logMeasurement(
+  fields: { waist_cm?: number; chest_cm?: number; hips_cm?: number; arm_cm?: number },
+  notes?: string
+) {
+  const supabase = createClient() as any;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const today = new Date().toISOString().split('T')[0];
+  const { error } = await supabase.from('measurements_log').upsert(
+    {
+      user_id: user.id,
+      date: today,
+      waist_cm: fields.waist_cm ?? null,
+      chest_cm: fields.chest_cm ?? null,
+      hips_cm: fields.hips_cm ?? null,
+      arm_cm: fields.arm_cm ?? null,
+      notes: notes || null,
+    },
+    { onConflict: 'user_id,date' }
+  );
+
+  if (error) throw error;
+  revalidatePath('/measurements');
+  revalidatePath('/dashboard');
+}
+
+export async function deleteMeasurement(id: string) {
+  const supabase = createClient() as any;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  await supabase.from('measurements_log').delete().eq('id', id).eq('user_id', user.id);
+  revalidatePath('/measurements');
+}
+
+export async function logSteps(steps: number) {
+  const supabase = createClient() as any;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const today = new Date().toISOString().split('T')[0];
+  const { error } = await supabase.from('steps_log').upsert(
+    { user_id: user.id, date: today, steps },
+    { onConflict: 'user_id,date' }
+  );
+
+  if (error) throw error;
+  revalidatePath('/steps');
+  revalidatePath('/dashboard');
 }

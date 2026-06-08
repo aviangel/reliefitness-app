@@ -15,6 +15,7 @@ export interface FypData {
   name: string;
   dateLabel: string;
   calories: number;
+  caloriesBurned: number;
   calorieGoal: number;
   protein: number; proteinGoal: number;
   carbs: number; carbsGoal: number;
@@ -171,6 +172,13 @@ export function FypFeed(d: FypData) {
               <CalorieRing calories={d.calories} goal={d.calorieGoal} size={188} />
             </div>
           </div>
+
+          {d.caloriesBurned > 0 && (
+            <div className="flex items-center justify-center gap-4 mb-3 text-[12px] font-bold">
+              <span style={{ color: muted }}>🔥 {t('stats.burned')} {d.caloriesBurned}</span>
+              <span className="text-primary">{t('stats.net')} {d.calories - d.caloriesBurned}</span>
+            </div>
+          )}
 
           <Link href="/meals/log" className="fyp-cta">
             <Plus size={18} strokeWidth={2.6} /> {t('dash.logMeal')}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
 import { updateGoals } from '@/lib/health/actions';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -8,13 +9,14 @@ import { useI18n } from '@/lib/i18n/context';
 import type { TranslationKey } from '@/lib/i18n/translations';
 import { LanguageToggle } from './LanguageToggle';
 import { ThemeToggle } from './ThemeToggle';
-import { CheckCircle2, LogOut } from 'lucide-react';
+import { CheckCircle2, LogOut, Moon, Ruler, Footprints, AlertTriangle, ChevronRight } from 'lucide-react';
 
 interface SettingsFormProps {
   calorieGoal: number;
   proteinGoal: number;
   carbsGoal: number;
   fatGoal: number;
+  waterGoalMl: number;
   currentWeight: number;
   targetWeight: number;
   userId: string;
@@ -25,6 +27,7 @@ export function SettingsForm({
   proteinGoal: initProtein,
   carbsGoal: initCarbs,
   fatGoal: initFat,
+  waterGoalMl: initWater,
   currentWeight,
   targetWeight,
 }: SettingsFormProps) {
@@ -33,6 +36,7 @@ export function SettingsForm({
   const [proteinGoal, setProteinGoal] = useState(initProtein.toString());
   const [carbsGoal, setCarbsGoal] = useState(initCarbs.toString());
   const [fatGoal, setFatGoal] = useState(initFat.toString());
+  const [waterGoal, setWaterGoal] = useState(initWater.toString());
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -44,12 +48,20 @@ export function SettingsForm({
         parseInt(calGoal) || 2000,
         parseInt(proteinGoal) || 150,
         parseInt(carbsGoal) || 200,
-        parseInt(fatGoal) || 65
+        parseInt(fatGoal) || 65,
+        parseInt(waterGoal) || 2500
       );
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     });
   };
+
+  const moreLinks: { href: string; labelKey: TranslationKey; icon: typeof Moon; color: string }[] = [
+    { href: '/sleep', labelKey: 'sleep.title', icon: Moon, color: 'text-indigo-400' },
+    { href: '/measurements', labelKey: 'meas.title', icon: Ruler, color: 'text-teal-400' },
+    { href: '/steps', labelKey: 'steps.title', icon: Footprints, color: 'text-lime-400' },
+    { href: '/slips', labelKey: 'slips.title', icon: AlertTriangle, color: 'text-rose-400' },
+  ];
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -62,6 +74,7 @@ export function SettingsForm({
     { labelKey: 'settings.proteinGoal', value: proteinGoal, set: setProteinGoal, unit: t('unit.g'), color: 'text-blue-400' },
     { labelKey: 'settings.carbsGoal', value: carbsGoal, set: setCarbsGoal, unit: t('unit.g'), color: 'text-amber-400' },
     { labelKey: 'settings.fatGoal', value: fatGoal, set: setFatGoal, unit: t('unit.g'), color: 'text-pink-400' },
+    { labelKey: 'settings.waterGoal', value: waterGoal, set: setWaterGoal, unit: t('unit.ml'), color: 'text-sky-400' },
   ];
 
   return (
@@ -120,6 +133,22 @@ export function SettingsForm({
       >
         {saved ? <><CheckCircle2 size={18} /> {t('settings.saved')}</> : isPending ? t('common.saving') : t('settings.saveGoals')}
       </button>
+
+      {/* More trackers */}
+      <div className="bg-surface border border-border rounded-[20px] overflow-hidden">
+        <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 pt-4 pb-2">{t('settings.moreTrackers')}</h2>
+        {moreLinks.map(({ href, labelKey, icon: Icon, color }) => (
+          <Link
+            key={href}
+            href={href}
+            className="flex items-center gap-3 px-4 py-3.5 border-t border-border active:bg-surface-2 transition-colors"
+          >
+            <Icon size={18} className={color} />
+            <span className="text-sm font-semibold flex-1">{t(labelKey)}</span>
+            <ChevronRight size={16} className="text-muted-foreground rtl:rotate-180" />
+          </Link>
+        ))}
+      </div>
 
       {/* Sign out */}
       <div className="pb-4">

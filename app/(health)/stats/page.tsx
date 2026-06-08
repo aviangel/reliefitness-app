@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { format, startOfWeek, addDays } from 'date-fns';
+import { format, startOfWeek, addDays, subDays } from 'date-fns';
 import { he as heLocale } from 'date-fns/locale';
 import { getT, getLang } from '@/lib/i18n/server';
 import { ScrollShell } from '@/components/health/ScrollShell';
-import { BarChart2 } from 'lucide-react';
+import { BarChart2, Flame } from 'lucide-react';
 
 export const revalidate = 0;
 
@@ -24,7 +24,9 @@ export default async function StatsPage() {
   const weekStart = format(weekStartDate, 'yyyy-MM-dd');
   const weekEnd = format(addDays(weekStartDate, 6), 'yyyy-MM-dd');
 
-  const [profileRes, weekMealsRes, weightRes] = await Promise.all([
+  const streakFrom = format(subDays(new Date(), 60), 'yyyy-MM-dd');
+
+  const [profileRes, weekMealsRes, weightRes, streakRes] = await Promise.all([
     supabase.from('user_profile').select('calorie_goal').eq('user_id', user.id).single(),
     supabase
       .from('meals_log')
@@ -38,11 +40,27 @@ export default async function StatsPage() {
       .eq('user_id', user.id)
       .order('date', { ascending: false })
       .limit(7),
+    supabase
+      .from('meals_log')
+      .select('date')
+      .eq('user_id', user.id)
+      .gte('date', streakFrom)
+      .lte('date', today),
   ]);
 
   const profile = profileRes.data as { calorie_goal: number } | null;
   const weekMeals = weekMealsRes.data as MealCalEntry[] | null;
   const weightHistory = weightRes.data as WeightEntry[] | null;
+
+  // Logging streak: consecutive days (ending today or yesterday) with a meal logged.
+  const loggedDates = new Set((streakRes.data as { date: string }[] | null ?? []).map(r => r.date));
+  let streak = 0;
+  for (let i = 0; i < 60; i++) {
+    const day = format(subDays(new Date(), i), 'yyyy-MM-dd');
+    if (loggedDates.has(day)) streak++;
+    else if (i === 0) continue; // today not logged yet — don't break the streak
+    else break;
+  }
 
   const calorieGoal = profile?.calorie_goal ?? 2000;
   const dayTotals: Record<string, number> = {};
@@ -77,6 +95,16 @@ export default async function StatsPage() {
       </div>
 
       <div className="p-4 space-y-4">
+        {streak > 0 && (
+          <div className="rounded-2xl px-5 py-4 flex items-center gap-3 border border-orange-500/20 bg-orange-500/10">
+            <Flame size={28} className="text-orange-400 shrink-0" />
+            <div>
+              <p className="text-2xl font-black tabular-nums text-orange-400 leading-none">{streak}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('stats.streak')}</p>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-card border border-border rounded-2xl p-4 text-center">
             <p className="text-2xl font-bold text-primary tabular-nums">{avgCalories}</p>

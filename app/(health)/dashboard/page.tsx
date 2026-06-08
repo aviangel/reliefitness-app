@@ -12,9 +12,7 @@ export const revalidate = 0;
 
 type WeightEntry = { weight_kg: number; date: string };
 type DrinkEntry = { type: string; amount_ml: number };
-type WorkoutEntry = { type: string; duration_minutes: number | null };
-
-const WATER_GOAL_ML = 2500;
+type WorkoutEntry = { type: string; duration_minutes: number | null; calories_burned: number | null };
 
 const TYPE_EMOJI: Record<string, string> = {
   gym: '🏋️', walk: '🚶', run: '🏃', swim: '🏊', cycling: '🚴', other: '💪',
@@ -51,7 +49,7 @@ export default async function DashboardPage() {
       .eq('date', today),
     supabase
       .from('workout_log')
-      .select('type,duration_minutes')
+      .select('type,duration_minutes,calories_burned')
       .eq('user_id', user.id)
       .eq('date', today)
       .order('logged_at', { ascending: false })
@@ -78,11 +76,14 @@ export default async function DashboardPage() {
 
   const totalWaterMl = drinks.filter((d) => d.type === 'water').reduce((s, d) => s + d.amount_ml, 0);
   const totalWorkoutMin = workouts.reduce((s, w) => s + (w.duration_minutes ?? 0), 0);
+  const totalBurned = workouts.reduce((s, w) => s + (w.calories_burned ?? 0), 0);
+  const waterGoalMl = Number((p as { water_goal_ml?: number }).water_goal_ml ?? 2500);
 
   const data: FypData = {
     name: p.name,
     dateLabel: format(new Date(), 'EEEE, d MMM', { locale: dateLocale }),
     calories: totalCalories,
+    caloriesBurned: totalBurned,
     calorieGoal: Number(p.calorie_goal),
     protein: totalProtein, proteinGoal: Number(p.protein_goal_g),
     carbs: totalCarbs, carbsGoal: Number(p.carbs_goal_g),
@@ -93,7 +94,7 @@ export default async function DashboardPage() {
       calories: m.calories,
     })),
     waterMl: totalWaterMl,
-    waterGoalMl: WATER_GOAL_ML,
+    waterGoalMl,
     currentWeight: Number(currentWeight),
     targetWeight: Number(p.target_weight_kg),
     kgToGo,

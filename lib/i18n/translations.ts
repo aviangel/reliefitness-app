@@ -216,6 +216,84 @@ export const translations = {
     'theme.label': 'Theme',
     'theme.light': 'Light',
     'theme.dark': 'Dark',
+
+    // ── Units / common ──
+    'unit.steps': 'steps',
+    'unit.hours': 'h',
+    'unit.cm': 'cm',
+    'common.save': 'Save',
+    'common.delete': 'Delete',
+
+    // ── More hub ──
+    'nav.more': 'More',
+    'more.title': 'More trackers',
+    'more.subtitle': 'Sleep, measurements, steps & slips',
+
+    // ── Sleep ──
+    'sleep.title': 'Sleep',
+    'sleep.subtitle': 'Track your nightly rest',
+    'sleep.hours': 'Hours slept',
+    'sleep.quality': 'Quality',
+    'sleep.logToday': "Log tonight's sleep",
+    'sleep.updateToday': "Update today's sleep",
+    'sleep.history': 'Sleep history',
+    'sleep.saved': 'Sleep logged',
+    'sleep.empty': 'No sleep logged yet',
+    'sleep.placeholder': 'e.g. 7.5',
+    'sleep.invalid': 'Enter hours between 0 and 24',
+    'sleep.avg': 'Avg sleep',
+    'sleep.q1': 'Poor',
+    'sleep.q2': 'Fair',
+    'sleep.q3': 'OK',
+    'sleep.q4': 'Good',
+    'sleep.q5': 'Great',
+
+    // ── Measurements ──
+    'meas.title': 'Measurements',
+    'meas.subtitle': 'Track your body measurements',
+    'meas.waist': 'Waist',
+    'meas.chest': 'Chest',
+    'meas.hips': 'Hips',
+    'meas.arm': 'Arm',
+    'meas.logToday': "Log today's measurements",
+    'meas.updateToday': "Update today's measurements",
+    'meas.history': 'History',
+    'meas.saved': 'Measurements saved',
+    'meas.empty': 'No measurements yet',
+    'meas.atLeastOne': 'Enter at least one measurement',
+
+    // ── Steps ──
+    'steps.title': 'Steps',
+    'steps.subtitle': 'Track your daily steps',
+    'steps.today': "Today's steps",
+    'steps.logToday': "Log today's steps",
+    'steps.history': 'History',
+    'steps.saved': 'Steps logged',
+    'steps.empty': 'No steps logged yet',
+    'steps.placeholder': 'e.g. 8000',
+    'steps.invalid': 'Enter a valid step count',
+    'steps.avg': 'Avg steps',
+
+    // ── Slips ──
+    'slips.title': 'Slips',
+    'slips.subtitle': 'Track and learn from slip-ups',
+    'slips.what': 'What happened',
+    'slips.why': 'Why (optional)',
+    'slips.log': 'Log a slip',
+    'slips.history': 'History',
+    'slips.empty': 'No slips logged. Keep it up! 💪',
+    'slips.saved': 'Logged',
+    'slips.whatPlaceholder': 'e.g. ate a whole pizza',
+    'slips.whyPlaceholder': 'What triggered it?',
+
+    // ── Settings extras ──
+    'settings.waterGoal': 'Daily water goal',
+    'settings.moreTrackers': 'More trackers',
+
+    // ── Stats extras ──
+    'stats.streak': 'Day streak',
+    'stats.burned': 'Burned',
+    'stats.net': 'Net',
   },
 
   he: {
@@ -432,6 +510,84 @@ export const translations = {
     'theme.label': 'ערכת נושא',
     'theme.light': 'בהיר',
     'theme.dark': 'כהה',
+
+    // ── Units / common ──
+    'unit.steps': 'צעדים',
+    'unit.hours': 'ש׳',
+    'unit.cm': 'ס״מ',
+    'common.save': 'שמירה',
+    'common.delete': 'מחיקה',
+
+    // ── More hub ──
+    'nav.more': 'עוד',
+    'more.title': 'מעקבים נוספים',
+    'more.subtitle': 'שינה, מידות, צעדים ומעידות',
+
+    // ── Sleep ──
+    'sleep.title': 'שינה',
+    'sleep.subtitle': 'מעקב אחר השינה הלילית',
+    'sleep.hours': 'שעות שינה',
+    'sleep.quality': 'איכות',
+    'sleep.logToday': 'תיעוד שינה',
+    'sleep.updateToday': 'עדכון שינה',
+    'sleep.history': 'היסטוריית שינה',
+    'sleep.saved': 'השינה תועדה',
+    'sleep.empty': 'אין תיעוד שינה עדיין',
+    'sleep.placeholder': 'למשל 7.5',
+    'sleep.invalid': 'הזן שעות בין 0 ל-24',
+    'sleep.avg': 'שינה ממוצעת',
+    'sleep.q1': 'גרועה',
+    'sleep.q2': 'בינונית',
+    'sleep.q3': 'סבירה',
+    'sleep.q4': 'טובה',
+    'sleep.q5': 'מצוינת',
+
+    // ── Measurements ──
+    'meas.title': 'מידות',
+    'meas.subtitle': 'מעקב אחר מידות הגוף',
+    'meas.waist': 'מותניים',
+    'meas.chest': 'חזה',
+    'meas.hips': 'אגן',
+    'meas.arm': 'זרוע',
+    'meas.logToday': 'תיעוד מידות',
+    'meas.updateToday': 'עדכון מידות',
+    'meas.history': 'היסטוריה',
+    'meas.saved': 'המידות נשמרו',
+    'meas.empty': 'אין מידות עדיין',
+    'meas.atLeastOne': 'הזן לפחות מדידה אחת',
+
+    // ── Steps ──
+    'steps.title': 'צעדים',
+    'steps.subtitle': 'מעקב צעדים יומי',
+    'steps.today': 'צעדים היום',
+    'steps.logToday': 'תיעוד צעדים',
+    'steps.history': 'היסטוריה',
+    'steps.saved': 'הצעדים תועדו',
+    'steps.empty': 'אין צעדים עדיין',
+    'steps.placeholder': 'למשל 8000',
+    'steps.invalid': 'הזן מספר צעדים תקין',
+    'steps.avg': 'צעדים בממוצע',
+
+    // ── Slips ──
+    'slips.title': 'מעידות',
+    'slips.subtitle': 'מעקב ולמידה ממעידות',
+    'slips.what': 'מה קרה',
+    'slips.why': 'למה (לא חובה)',
+    'slips.log': 'תיעוד מעידה',
+    'slips.history': 'היסטוריה',
+    'slips.empty': 'אין מעידות. כל הכבוד! 💪',
+    'slips.saved': 'נשמר',
+    'slips.whatPlaceholder': 'למשל אכלתי פיצה שלמה',
+    'slips.whyPlaceholder': 'מה גרם לזה?',
+
+    // ── Settings extras ──
+    'settings.waterGoal': 'יעד מים יומי',
+    'settings.moreTrackers': 'מעקבים נוספים',
+
+    // ── Stats extras ──
+    'stats.streak': 'רצף ימים',
+    'stats.burned': 'נשרף',
+    'stats.net': 'נטו',
   },
 } as const;
 

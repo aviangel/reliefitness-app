@@ -12,6 +12,7 @@ type ProfileRow = {
   protein_goal_g: number;
   carbs_goal_g: number;
   fat_goal_g: number;
+  water_goal_ml: number;
   current_weight_kg: number;
   target_weight_kg: number;
 };
@@ -42,6 +43,7 @@ export default async function SettingsPage() {
         proteinGoal={Number(p.protein_goal_g)}
         carbsGoal={Number(p.carbs_goal_g)}
         fatGoal={Number(p.fat_goal_g)}
+        waterGoalMl={Number(p.water_goal_ml ?? 2500)}
         currentWeight={Number(p.current_weight_kg)}
         targetWeight={Number(p.target_weight_kg)}
         userId={user.id}

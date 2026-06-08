@@ -11,6 +11,7 @@ export const DEFAULT_PROFILE = {
   protein_goal_g: 150,
   carbs_goal_g: 200,
   fat_goal_g: 65,
+  water_goal_ml: 2500,
   hernia_flag: true,
 };
 
@@ -62,5 +63,30 @@ export interface UserProfileRow {
   protein_goal_g: number;
   carbs_goal_g: number;
   fat_goal_g: number;
+  water_goal_ml: number;
   hernia_flag: boolean;
+}
+
+export interface SleepLogEntry {
+  id: string;
+  date: string;
+  hours: number;
+  quality: number | null;
+  notes: string | null;
+}
+
+export interface MeasurementLogEntry {
+  id: string;
+  date: string;
+  waist_cm: number | null;
+  chest_cm: number | null;
+  hips_cm: number | null;
+  arm_cm: number | null;
+  notes: string | null;
+}
+
+export interface StepsLogEntry {
+  id: string;
+  date: string;
+  steps: number;
 }
