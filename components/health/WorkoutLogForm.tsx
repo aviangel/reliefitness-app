@@ -74,7 +74,7 @@ export function WorkoutLogForm() {
               className={`flex flex-col items-center gap-1.5 py-4 rounded-2xl border text-sm font-medium transition-all ${
                 type === wt.id
                   ? 'border-primary/50 bg-primary/10 text-primary shadow-[0_0_12px_rgba(34,197,94,0.1)]'
-                  : 'border-white/[0.06] bg-white/[0.02] text-muted-foreground hover:border-primary/20'
+                  : 'border-border bg-surface-2 text-muted-foreground hover:border-primary/20'
               }`}
             >
               <span className="text-2xl">{wt.emoji}</span>
@@ -96,7 +96,7 @@ export function WorkoutLogForm() {
               className={`flex-shrink-0 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all ${
                 duration === d && !customDuration
                   ? 'border-primary/50 bg-primary/10 text-primary shadow-[0_0_8px_rgba(34,197,94,0.1)]'
-                  : 'border-white/[0.06] bg-white/[0.02] text-muted-foreground hover:border-primary/20'
+                  : 'border-border bg-surface-2 text-muted-foreground hover:border-primary/20'
               }`}
             >
               {d}m
@@ -108,7 +108,7 @@ export function WorkoutLogForm() {
           placeholder={t('wk.customDuration')}
           value={customDuration}
           onChange={(e) => { setCustomDuration(e.target.value); }}
-          className="mt-2.5 w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/50"
+          className="mt-2.5 w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/50"
         />
       </div>
 
@@ -120,7 +120,7 @@ export function WorkoutLogForm() {
           onChange={(e) => setNotes(e.target.value)}
           placeholder={t('wk.notesPlaceholder')}
           rows={2}
-          className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/50 resize-none"
+          className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/50 resize-none"
         />
       </div>
 
@@ -134,7 +134,7 @@ export function WorkoutLogForm() {
         disabled={isPending}
         className={`w-full py-4 rounded-2xl font-bold text-sm transition-all active:scale-[0.98] ${
           isPending
-            ? 'bg-white/[0.04] text-muted-foreground cursor-not-allowed'
+            ? 'bg-surface-2 text-muted-foreground cursor-not-allowed'
             : 'bg-primary text-primary-foreground shadow-[0_4px_20px_rgba(34,197,94,0.3)] hover:opacity-90'
         }`}
       >

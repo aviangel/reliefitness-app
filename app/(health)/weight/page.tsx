@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { WeightLogForm } from '@/components/health/WeightLogForm';
+import { ScrollShell } from '@/components/health/ScrollShell';
 import { getT } from '@/lib/i18n/server';
 import { format, parseISO } from 'date-fns';
 import { TrendingDown, TrendingUp, Minus, Scale } from 'lucide-react';
@@ -33,8 +34,8 @@ export default async function WeightPage() {
     : null;
 
   return (
-    <div>
-      <div className="px-4 py-5 border-b border-white/[0.07]">
+    <ScrollShell>
+      <div className="px-4 py-5 border-b border-border">
         <div className="flex items-center gap-2">
           <Scale size={22} className="text-primary" />
           <h1 className="text-xl font-bold">{t('weight.title')}</h1>
@@ -118,6 +119,6 @@ export default async function WeightPage() {
           </div>
         )}
       </div>
-    </div>
+    </ScrollShell>
   );
 }

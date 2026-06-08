@@ -17,7 +17,7 @@ function MacroBar({ label, current, goal, gradFrom, gradTo }: MacroBarProps) {
           <span className="text-muted-foreground/60 font-normal text-[10px]">/{goal}</span>
         </span>
       </div>
-      <div className="h-[6px] bg-white/[0.06] rounded-full overflow-hidden">
+      <div className="h-[6px] bg-muted rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{

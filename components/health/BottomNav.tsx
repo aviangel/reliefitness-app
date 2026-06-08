@@ -25,7 +25,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50 pb-[env(safe-area-inset-bottom)]">
-      <div className="mx-3 mb-3 bg-[#0d0d0d]/95 backdrop-blur-xl border border-white/[0.07] rounded-[24px] px-1 py-2 shadow-[0_-8px_40px_rgba(0,0,0,0.6)]">
+      <div className="mx-3 mb-3 bg-surface/95 backdrop-blur-xl border border-border rounded-[24px] px-1 py-2 shadow-[0_-8px_40px_rgba(0,0,0,0.6)]">
         <div className="flex items-center justify-around">
 
           {/* Left items */}

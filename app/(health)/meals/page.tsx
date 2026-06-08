@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { DeleteMealButton } from '@/components/health/DeleteMealButton';
 import { MEAL_TYPES } from '@/lib/health/constants';
+import { ScrollShell } from '@/components/health/ScrollShell';
 import { getT } from '@/lib/i18n/server';
 import type { MealLogEntry, MealType } from '@/types/health';
 import { format } from 'date-fns';
@@ -35,8 +36,8 @@ export default async function MealsPage() {
   }));
 
   return (
-    <div className="pb-4">
-      <div className="sticky top-0 bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-white/[0.06] px-4 py-4 z-10">
+    <ScrollShell>
+      <div className="sticky top-0 bg-background/90 backdrop-blur-xl border-b border-border px-4 py-4 z-10">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-[20px] font-black">{t('meals.title')}</h1>
@@ -73,8 +74,8 @@ export default async function MealsPage() {
           if (entries.length === 0) return null;
           const mealCal = Math.round(entries.reduce((s, m) => s + (m.calories ?? 0), 0));
           return (
-            <div key={id} className="bg-[#111111] border border-white/[0.06] rounded-[20px] overflow-hidden">
-              <div className="flex items-center gap-2.5 px-4 py-3 border-b border-white/[0.05]">
+            <div key={id} className="bg-surface border border-border rounded-[20px] overflow-hidden">
+              <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border">
                 <span className="text-xl">{emoji}</span>
                 <span className="text-sm font-bold">{t(labelKey)}</span>
                 <span className="text-[10px] text-muted-foreground/60 font-medium ms-1">
@@ -94,7 +95,7 @@ export default async function MealsPage() {
                 </span>
               </div>
               {entries.map(entry => (
-                <div key={entry.id} className="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.04] last:border-0">
+                <div key={entry.id} className="flex items-center gap-3 px-4 py-3.5 border-b border-border last:border-0">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate">{entry.food_name ?? t('meals.unknownFood')}</p>
                     <div className="flex items-center gap-2 mt-0.5">
@@ -116,12 +117,12 @@ export default async function MealsPage() {
 
         <Link
           href="/meals/log"
-          className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl border border-dashed border-white/[0.10] text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors text-sm font-medium"
+          className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl border border-dashed border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors text-sm font-medium"
         >
           <Plus size={18} />
           {t('meals.logAnother')}
         </Link>
       </div>
-    </div>
+    </ScrollShell>
   );
 }

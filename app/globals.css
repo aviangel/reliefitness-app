@@ -3,19 +3,48 @@
 @tailwind utilities;
 
 @layer base {
+  /* ── Light theme (default :root) ── */
   :root {
+    --background: 0 0% 96%;
+    --foreground: 0 0% 9%;
+    --surface: 0 0% 100%;
+    --surface-2: 0 0% 93%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+    --primary: 142 70% 40%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 92%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 92%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 0 0% 92%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 142 70% 40%;
+    --radius: 0.75rem;
+  }
+
+  /* ── Dark theme ── */
+  .dark {
     --background: 0 0% 4%;
     --foreground: 0 0% 95%;
-    --card: 0 0% 8%;
+    --surface: 0 0% 7%;
+    --surface-2: 0 0% 11%;
+    --card: 0 0% 7%;
     --card-foreground: 0 0% 95%;
-    --popover: 0 0% 8%;
+    --popover: 0 0% 7%;
     --popover-foreground: 0 0% 95%;
     --primary: 142 76% 46%;
     --primary-foreground: 0 0% 0%;
     --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 95%;
     --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 45%;
+    --muted-foreground: 0 0% 50%;
     --accent: 0 0% 12%;
     --accent-foreground: 0 0% 95%;
     --destructive: 0 72% 52%;
@@ -23,7 +52,6 @@
     --border: 0 0% 13%;
     --input: 0 0% 13%;
     --ring: 142 76% 46%;
-    --radius: 0.75rem;
   }
 }
 
@@ -39,7 +67,6 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Heebo', sans-serif;
-    background-color: #0a0a0a;
     -webkit-font-smoothing: antialiased;
     height: 100%;
     overflow: hidden;
@@ -55,14 +82,9 @@
 }
 
 @layer utilities {
-  .text-gradient {
-    background: linear-gradient(135deg, #22c55e 0%, #4ade80 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+  .text-gradient,
   .gradient-text {
-    background: linear-gradient(135deg, #22c55e, #4ade80);
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, #4ade80 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -73,57 +95,62 @@
   .no-scrollbar { scrollbar-width: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
 
-  /* Legacy glass card kept for compatibility */
-  .glass-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.07);
+  /* Native momentum scrolling + contained bounce */
+  .scroll-touch {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
   }
 
-  /* New feed-style card — slightly elevated, sharp */
+  /* FYP-style snap pager */
+  .snap-pager {
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+  .snap-panel {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  /* Legacy compat */
+  .glass-card {
+    background: hsl(var(--surface));
+    border: 1px solid hsl(var(--border));
+  }
   .feed-card {
-    background: #111111;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: hsl(var(--surface));
+    border: 1px solid hsl(var(--border));
     border-radius: 20px;
   }
 
-  /* Glow utilities */
-  .glow-green {
-    box-shadow: 0 0 24px rgba(34, 197, 94, 0.25), 0 0 8px rgba(34, 197, 94, 0.15);
+  .glow-green { box-shadow: 0 0 24px rgba(34, 197, 94, 0.25), 0 0 8px rgba(34, 197, 94, 0.15); }
+  .glow-blue  { box-shadow: 0 0 24px rgba(59, 130, 246, 0.25), 0 0 8px rgba(59, 130, 246, 0.15); }
+
+  @keyframes fyp-fade-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-  .glow-blue {
-    box-shadow: 0 0 24px rgba(59, 130, 246, 0.25), 0 0 8px rgba(59, 130, 246, 0.15);
-  }
-  .glow-red {
-    box-shadow: 0 0 24px rgba(239, 68, 68, 0.3), 0 0 8px rgba(239, 68, 68, 0.2);
+  .fyp-enter {
+    animation: fyp-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
-  /* Stat number — big bold social-media-metric style */
-  .stat-number {
-    font-size: 2rem;
+  /* Full-width call-to-action button inside a FYP panel */
+  .fyp-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.95rem 1rem;
+    border-radius: 18px;
     font-weight: 900;
-    line-height: 1;
-    letter-spacing: -0.02em;
-    font-variant-numeric: tabular-nums;
+    font-size: 15px;
+    color: #000;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+    transition: transform 0.15s ease;
   }
-
-  /* Gradient borders */
-  .gradient-border-green {
-    border-image: linear-gradient(135deg, #22c55e, #00e5ff) 1;
-  }
-
-  /* Full gradient bg for FAB */
-  .fab-gradient {
-    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  }
-
-  /* TikTok-style center FAB overlay sides */
-  .fab-tiktok::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: linear-gradient(135deg, #22c55e, #00e5ff);
-    margin: -2px;
-    z-index: -1;
+  .fyp-cta:active {
+    transform: scale(0.97);
   }
 }

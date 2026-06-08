@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { format, subDays, startOfWeek } from 'date-fns';
 import { getT } from '@/lib/i18n/server';
+import { ScrollShell } from '@/components/health/ScrollShell';
 import { BarChart2 } from 'lucide-react';
 
 export const revalidate = 0;
@@ -58,7 +59,7 @@ export default async function StatsPage() {
   const maxCal = Math.max(...last7.map(d => d.calories), calorieGoal);
 
   return (
-    <div>
+    <ScrollShell>
       <div className="px-4 py-5 border-b border-border">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <BarChart2 size={22} className="text-primary" />
@@ -141,6 +142,6 @@ export default async function StatsPage() {
           </p>
         </div>
       </div>
-    </div>
+    </ScrollShell>
   );
 }

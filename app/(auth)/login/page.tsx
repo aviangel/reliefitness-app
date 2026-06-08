@@ -31,7 +31,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] p-6">
+    <div className="min-h-screen flex items-center justify-center bg-background p-6">
       <div className="w-full max-w-sm">
         <div className="text-center mb-12">
           <div
@@ -66,7 +66,7 @@ function LoginForm() {
               placeholder={t('login.emailPlaceholder')}
               required
               dir="ltr"
-              className="w-full bg-[#111111] border border-white/[0.08] rounded-[16px] px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all placeholder:text-muted-foreground/40"
+              className="w-full bg-surface border border-border rounded-[16px] px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all placeholder:text-muted-foreground/40"
             />
           </div>
           <div>
@@ -80,7 +80,7 @@ function LoginForm() {
               placeholder="••••••••"
               required
               dir="ltr"
-              className="w-full bg-[#111111] border border-white/[0.08] rounded-[16px] px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all"
+              className="w-full bg-surface border border-border rounded-[16px] px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all"
             />
           </div>
 

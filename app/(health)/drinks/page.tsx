@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useTransition } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { logDrink, deleteDrink } from '@/lib/health/actions';
 import { useI18n } from '@/lib/i18n/context';
+import { ScrollShell } from '@/components/health/ScrollShell';
 import type { TranslationKey } from '@/lib/i18n/translations';
 import { format } from 'date-fns';
 import { Droplets, X } from 'lucide-react';
@@ -12,9 +13,9 @@ type DrinkType = 'water' | 'zero' | 'diet_coke';
 type DrinkEntry = { id: string; type: DrinkType; amount_ml: number; logged_at: string | null };
 
 const DRINKS: { type: DrinkType; labelKey: TranslationKey; emoji: string; color: string; activeBg: string; inactiveBg: string }[] = [
-  { type: 'water', labelKey: 'drink.water', emoji: '💧', color: 'text-blue-400', activeBg: 'bg-blue-500/20 border-blue-500/40 text-blue-400', inactiveBg: 'bg-white/[0.03] border-white/[0.06] text-muted-foreground' },
-  { type: 'zero', labelKey: 'drink.zero', emoji: '🟢', color: 'text-emerald-400', activeBg: 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400', inactiveBg: 'bg-white/[0.03] border-white/[0.06] text-muted-foreground' },
-  { type: 'diet_coke', labelKey: 'drink.diet_coke', emoji: '🥤', color: 'text-rose-400', activeBg: 'bg-rose-500/20 border-rose-500/40 text-rose-400', inactiveBg: 'bg-white/[0.03] border-white/[0.06] text-muted-foreground' },
+  { type: 'water', labelKey: 'drink.water', emoji: '💧', color: 'text-blue-400', activeBg: 'bg-blue-500/20 border-blue-500/40 text-blue-400', inactiveBg: 'bg-surface-2 border-border text-muted-foreground' },
+  { type: 'zero', labelKey: 'drink.zero', emoji: '🟢', color: 'text-emerald-400', activeBg: 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400', inactiveBg: 'bg-surface-2 border-border text-muted-foreground' },
+  { type: 'diet_coke', labelKey: 'drink.diet_coke', emoji: '🥤', color: 'text-rose-400', activeBg: 'bg-rose-500/20 border-rose-500/40 text-rose-400', inactiveBg: 'bg-surface-2 border-border text-muted-foreground' },
 ];
 
 const AMOUNTS = [150, 250, 330, 500, 750];
@@ -67,8 +68,8 @@ export default function DrinksPage() {
   const selectedDrink = DRINKS.find((d) => d.type === selectedType)!;
 
   return (
-    <div>
-      <div className="px-4 pt-6 pb-4 border-b border-white/[0.06]">
+    <ScrollShell>
+      <div className="px-4 pt-6 pb-4 border-b border-border">
         <h1 className="text-[20px] font-black flex items-center gap-2">
           <Droplets size={20} className="text-blue-400" />
           {t('drinks.title')}
@@ -78,7 +79,7 @@ export default function DrinksPage() {
 
       <div className="p-4 space-y-4">
         {/* Water progress card */}
-        <div className="bg-[#111111] border border-white/[0.06] rounded-[24px] p-5">
+        <div className="bg-surface border border-border rounded-[24px] p-5">
           <div className="flex items-end justify-between mb-4">
             <div>
               <p
@@ -108,7 +109,7 @@ export default function DrinksPage() {
               )}
             </div>
           </div>
-          <div className="h-3 bg-white/[0.05] rounded-full overflow-hidden">
+          <div className="h-3 bg-muted rounded-full overflow-hidden">
             <div
               className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-700"
               style={{
@@ -125,7 +126,7 @@ export default function DrinksPage() {
         </div>
 
         {/* Quick log panel */}
-        <div className="bg-[#111111] border border-white/[0.06] rounded-[24px] p-4 space-y-4">
+        <div className="bg-surface border border-border rounded-[24px] p-4 space-y-4">
           <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t('drinks.quickLog')}</h2>
 
           {/* Drink type buttons */}
@@ -155,7 +156,7 @@ export default function DrinksPage() {
                 className={`flex-1 py-3 rounded-[12px] border text-xs font-black transition-all active:scale-95 ${
                   selectedAmount === ml
                     ? 'bg-primary/15 border-primary/40 text-primary shadow-[0_0_12px_rgba(34,197,94,0.2)]'
-                    : 'bg-white/[0.02] border-white/[0.06] text-muted-foreground hover:border-primary/20'
+                    : 'bg-surface-2 border-border text-muted-foreground hover:border-primary/20'
                 }`}
               >
                 {ml}
@@ -201,7 +202,7 @@ export default function DrinksPage() {
                 return (
                   <div
                     key={entry.id}
-                    className="bg-[#111111] border border-white/[0.06] rounded-[16px] flex items-center gap-3 px-4 py-3"
+                    className="bg-surface border border-border rounded-[16px] flex items-center gap-3 px-4 py-3"
                   >
                     <span className="text-xl shrink-0">{drink?.emoji}</span>
                     <div className="flex-1">
@@ -232,6 +233,6 @@ export default function DrinksPage() {
           </div>
         )}
       </div>
-    </div>
+    </ScrollShell>
   );
 }

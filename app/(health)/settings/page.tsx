@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { DEFAULT_PROFILE } from '@/types/health';
 import { SettingsForm } from '@/components/health/SettingsForm';
+import { ScrollShell } from '@/components/health/ScrollShell';
 import { getT } from '@/lib/i18n/server';
 
 export const revalidate = 0;
@@ -31,8 +32,8 @@ export default async function SettingsPage() {
   const p = profile ?? DEFAULT_PROFILE;
 
   return (
-    <div>
-      <div className="px-4 pt-6 pb-4 border-b border-white/[0.06]">
+    <ScrollShell>
+      <div className="px-4 pt-6 pb-4 border-b border-border">
         <h1 className="text-[20px] font-black">{t('settings.title')}</h1>
         <p className="text-[11px] text-muted-foreground font-medium mt-0.5">{t('settings.subtitle')}</p>
       </div>
@@ -45,6 +46,6 @@ export default async function SettingsPage() {
         targetWeight={Number(p.target_weight_kg)}
         userId={user.id}
       />
-    </div>
+    </ScrollShell>
   );
 }

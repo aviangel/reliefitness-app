@@ -98,7 +98,7 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
               className={`flex flex-col items-center gap-1 py-3 px-2 rounded-2xl border text-xs font-medium transition-all ${
                 mealType === mt.id
                   ? 'border-primary/50 bg-primary/10 text-primary shadow-[0_0_12px_rgba(34,197,94,0.1)]'
-                  : 'border-white/[0.06] bg-white/[0.02] text-muted-foreground hover:border-primary/20'
+                  : 'border-border bg-surface-2 text-muted-foreground hover:border-primary/20'
               }`}
             >
               <span className="text-xl">{mt.emoji}</span>
@@ -141,7 +141,7 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
                 placeholder={t('form.searchFoods')}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/50"
+                className="w-full bg-surface-2 border border-border rounded-xl pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/50"
               />
               {search && (
                 <button
@@ -165,7 +165,7 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
                     className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
                       activeCategory === cat.id
                         ? 'bg-primary text-primary-foreground shadow-[0_2px_12px_rgba(34,197,94,0.25)]'
-                        : 'bg-white/[0.04] border border-white/[0.06] text-muted-foreground hover:border-primary/20'
+                        : 'bg-surface-2 border border-border text-muted-foreground hover:border-primary/20'
                     }`}
                   >
                     <span>{cat.emoji}</span>
@@ -182,7 +182,7 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
                   key={food.name}
                   type="button"
                   onClick={() => { setSelectedFood(food); setPortionMult(1.0); setSearch(''); }}
-                  className="w-full flex items-center gap-3 px-3.5 py-3 rounded-[14px] border border-white/[0.06] bg-[#111111] hover:border-primary/30 hover:bg-primary/[0.05] transition-all text-left active:scale-[0.98]"
+                  className="w-full flex items-center gap-3 px-3.5 py-3 rounded-[14px] border border-border bg-surface hover:border-primary/30 hover:bg-primary/[0.05] transition-all text-left active:scale-[0.98]"
                 >
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{food.name}</p>
@@ -225,7 +225,7 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
                 className={`flex-1 py-2.5 rounded-xl border text-xs font-bold transition-all ${
                   portionMult === pm.value
                     ? 'border-primary/50 bg-primary/10 text-primary shadow-[0_0_8px_rgba(34,197,94,0.1)]'
-                    : 'border-white/[0.06] bg-white/[0.02] text-muted-foreground hover:border-primary/20'
+                    : 'border-border bg-surface-2 text-muted-foreground hover:border-primary/20'
                 }`}
               >
                 {pm.label}
@@ -237,7 +237,7 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
 
       {/* Nutrition preview */}
       {selectedFood && (
-        <div className="bg-[#111111] border border-white/[0.07] rounded-[20px] p-4">
+        <div className="bg-surface border border-border rounded-[20px] p-4">
           <div className="text-center mb-4">
             <span
               className="font-black tabular-nums leading-none"
@@ -281,7 +281,7 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
         className={`w-full py-4 rounded-[20px] font-black text-[15px] tracking-wide transition-all active:scale-[0.98] ${
           selectedFood && !isPending
             ? 'text-black shadow-[0_4px_24px_rgba(34,197,94,0.4)]'
-            : 'bg-white/[0.04] text-muted-foreground cursor-not-allowed'
+            : 'bg-surface-2 text-muted-foreground cursor-not-allowed'
         }`}
         style={selectedFood && !isPending ? {
           background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',

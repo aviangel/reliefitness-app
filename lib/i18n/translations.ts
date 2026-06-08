@@ -209,6 +209,13 @@ export const translations = {
     'ring.over': '+{n} over goal',
     'ring.remaining': '{n} kcal remaining',
     'ring.dailyGoal': 'Daily goal: {n} kcal',
+
+    // ── FYP feed ──
+    'fyp.swipe': 'Swipe',
+    'fyp.macros': 'Macros',
+    'theme.label': 'Theme',
+    'theme.light': 'Light',
+    'theme.dark': 'Dark',
   },
 
   he: {
@@ -418,6 +425,13 @@ export const translations = {
     'ring.over': '+{n} מעל היעד',
     'ring.remaining': 'נותרו {n} קל׳',
     'ring.dailyGoal': 'יעד יומי: {n} קל׳',
+
+    // ── FYP feed ──
+    'fyp.swipe': 'החלק',
+    'fyp.macros': 'מאקרו',
+    'theme.label': 'ערכת נושא',
+    'theme.light': 'בהיר',
+    'theme.dark': 'כהה',
   },
 } as const;
 

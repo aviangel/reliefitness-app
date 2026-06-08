@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { WorkoutLogForm } from '@/components/health/WorkoutLogForm';
 import { DeleteWorkoutButton } from '@/components/health/DeleteWorkoutButton';
+import { ScrollShell } from '@/components/health/ScrollShell';
 import { getT } from '@/lib/i18n/server';
 import type { TranslationKey } from '@/lib/i18n/translations';
 import { format, parseISO } from 'date-fns';
@@ -52,8 +53,8 @@ export default async function WorkoutPage() {
   });
 
   return (
-    <div>
-      <div className="px-4 py-5 border-b border-white/[0.07]">
+    <ScrollShell>
+      <div className="px-4 py-5 border-b border-border">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Dumbbell size={22} className="text-primary" />
           {t('wk.title')}
@@ -138,6 +139,6 @@ export default async function WorkoutPage() {
           </div>
         )}
       </div>
-    </div>
+    </ScrollShell>
   );
 }

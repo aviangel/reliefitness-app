@@ -24,7 +24,7 @@ export function MealChecklist({ meals }: MealChecklistProps) {
             className={`relative flex items-center gap-3 px-3.5 py-3 rounded-[16px] border transition-all ${
               hasLog
                 ? 'bg-primary/[0.05] border-primary/15'
-                : 'bg-[#111111] border-white/[0.05]'
+                : 'bg-surface border-border'
             }`}
           >
             {/* Left accent */}
@@ -64,7 +64,7 @@ export function MealChecklist({ meals }: MealChecklistProps) {
                 className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
                   hasLog
                     ? 'bg-primary/15 text-primary'
-                    : 'bg-white/[0.05] text-muted-foreground/40 hover:bg-white/[0.09]'
+                    : 'bg-muted text-muted-foreground/40 hover:bg-muted'
                 }`}
                 aria-label={`Add ${label}`}
               >

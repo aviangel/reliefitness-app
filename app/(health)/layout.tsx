@@ -10,13 +10,11 @@ export default async function HealthLayout({ children }: { children: React.React
 
   return (
     <div
-      className="flex flex-col overflow-hidden bg-[#0a0a0a]"
+      className="flex flex-col overflow-hidden bg-background"
       style={{ maxWidth: 480, margin: '0 auto', height: '100dvh' }}
     >
-      <main
-        className="flex-1 overflow-y-auto pb-24"
-        style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
-      >
+      {/* Positioning context — each page owns a full-size scroll box inside */}
+      <main className="flex-1 min-h-0 relative overflow-hidden">
         {children}
       </main>
       <SlipLogDialog />
