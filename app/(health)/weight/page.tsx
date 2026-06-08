@@ -2,8 +2,9 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { WeightLogForm } from '@/components/health/WeightLogForm';
 import { ScrollShell } from '@/components/health/ScrollShell';
-import { getT } from '@/lib/i18n/server';
+import { getT, getLang } from '@/lib/i18n/server';
 import { format, parseISO } from 'date-fns';
+import { he as heLocale } from 'date-fns/locale';
 import { TrendingDown, TrendingUp, Minus, Scale } from 'lucide-react';
 
 export const revalidate = 0;
@@ -12,6 +13,8 @@ type WeightEntry = { id: string; date: string; weight_kg: number; notes: string 
 
 export default async function WeightPage() {
   const t = getT();
+  const lang = getLang();
+  const dateLocale = lang === 'he' ? heLocale : undefined;
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -40,7 +43,7 @@ export default async function WeightPage() {
           <Scale size={22} className="text-primary" />
           <h1 className="text-xl font-bold">{t('weight.title')}</h1>
         </div>
-        <p className="text-sm text-muted-foreground">{format(new Date(), 'EEEE, MMMM d')}</p>
+        <p className="text-sm text-muted-foreground">{format(new Date(), 'EEEE, d MMMM', { locale: dateLocale })}</p>
       </div>
 
       <div className="p-4 space-y-4">
@@ -93,7 +96,7 @@ export default async function WeightPage() {
                   <div key={entry.id} className="glass-card rounded-2xl flex items-center justify-between px-4 py-3.5">
                     <div>
                       <p className="text-sm font-medium flex items-center gap-2">
-                        {format(parseISO(entry.date), 'EEE, MMM d')}
+                        {format(parseISO(entry.date), 'EEE, d MMM', { locale: dateLocale })}
                         {entry.date === today && (
                           <span className="text-xs bg-primary/20 text-primary rounded-full px-2 py-0.5">{t('common.today')}</span>
                         )}

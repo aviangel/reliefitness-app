@@ -3,9 +3,10 @@ import { redirect } from 'next/navigation';
 import { WorkoutLogForm } from '@/components/health/WorkoutLogForm';
 import { DeleteWorkoutButton } from '@/components/health/DeleteWorkoutButton';
 import { ScrollShell } from '@/components/health/ScrollShell';
-import { getT } from '@/lib/i18n/server';
+import { getT, getLang } from '@/lib/i18n/server';
 import type { TranslationKey } from '@/lib/i18n/translations';
 import { format, parseISO } from 'date-fns';
+import { he as heLocale } from 'date-fns/locale';
 import { Dumbbell, Flame, Clock } from 'lucide-react';
 
 export const revalidate = 0;
@@ -30,6 +31,8 @@ const TYPE_EMOJI: Record<string, string> = {
 
 export default async function WorkoutPage() {
   const t = getT();
+  const lang = getLang();
+  const dateLocale = lang === 'he' ? heLocale : undefined;
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -59,7 +62,7 @@ export default async function WorkoutPage() {
           <Dumbbell size={22} className="text-primary" />
           {t('wk.title')}
         </h1>
-        <p className="text-sm text-muted-foreground">{format(new Date(), 'EEEE, MMMM d')}</p>
+        <p className="text-sm text-muted-foreground">{format(new Date(), 'EEEE, d MMMM', { locale: dateLocale })}</p>
       </div>
 
       <div className="p-4 space-y-4">
@@ -129,7 +132,7 @@ export default async function WorkoutPage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <p className="text-xs text-muted-foreground">
-                      {format(parseISO(entry.date), 'MMM d')}
+                      {format(parseISO(entry.date), 'd MMM', { locale: dateLocale })}
                     </p>
                     <DeleteWorkoutButton workoutId={entry.id} />
                   </div>

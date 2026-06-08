@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { format, subDays, startOfWeek } from 'date-fns';
-import { getT } from '@/lib/i18n/server';
+import { format, startOfWeek, addDays } from 'date-fns';
+import { he as heLocale } from 'date-fns/locale';
+import { getT, getLang } from '@/lib/i18n/server';
 import { ScrollShell } from '@/components/health/ScrollShell';
 import { BarChart2 } from 'lucide-react';
 
@@ -12,12 +13,16 @@ type WeightEntry = { date: string; weight_kg: number };
 
 export default async function StatsPage() {
   const t = getT();
+  const lang = getLang();
+  const dateLocale = lang === 'he' ? heLocale : undefined;
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
   const today = format(new Date(), 'yyyy-MM-dd');
-  const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 0 }), 'yyyy-MM-dd');
+  const weekStartDate = startOfWeek(new Date(), { weekStartsOn: 0 });
+  const weekStart = format(weekStartDate, 'yyyy-MM-dd');
+  const weekEnd = format(addDays(weekStartDate, 6), 'yyyy-MM-dd');
 
   const [profileRes, weekMealsRes, weightRes] = await Promise.all([
     supabase.from('user_profile').select('calorie_goal').eq('user_id', user.id).single(),
@@ -26,7 +31,7 @@ export default async function StatsPage() {
       .select('date,calories')
       .eq('user_id', user.id)
       .gte('date', weekStart)
-      .lte('date', today),
+      .lte('date', weekEnd),
     supabase
       .from('weight_log')
       .select('date,weight_kg')
@@ -50,13 +55,16 @@ export default async function StatsPage() {
     : 0;
   const daysUnderGoal = Object.values(dayTotals).filter(c => c <= calorieGoal).length;
 
-  const last7 = Array.from({ length: 7 }).map((_, i) => {
-    const date = format(subDays(new Date(), 6 - i), 'yyyy-MM-dd');
-    const label = format(subDays(new Date(), 6 - i), 'EEE');
+  // Sun–Sat calendar week (not rolling 7 days)
+  const weekDays = Array.from({ length: 7 }).map((_, i) => {
+    const d = addDays(weekStartDate, i);
+    const date = format(d, 'yyyy-MM-dd');
+    const label = format(d, 'EEEEE', { locale: dateLocale }); // single-char abbr
     const calories = Math.round(dayTotals[date] ?? 0);
-    return { date, label, calories };
+    const isFuture = date > today;
+    return { date, label, calories, isFuture };
   });
-  const maxCal = Math.max(...last7.map(d => d.calories), calorieGoal);
+  const maxCal = Math.max(...weekDays.map(d => d.calories), calorieGoal);
 
   return (
     <ScrollShell>
@@ -87,7 +95,7 @@ export default async function StatsPage() {
         <div className="bg-card border border-border rounded-2xl p-4">
           <h2 className="text-sm font-semibold mb-4">{t('stats.last7')}</h2>
           <div className="flex items-end gap-2 h-28">
-            {last7.map(({ label, calories, date }) => {
+            {weekDays.map(({ label, calories, date, isFuture }) => {
               const pct = maxCal > 0 ? (calories / maxCal) * 100 : 0;
               const isToday = date === today;
               const overGoal = calories > calorieGoal && calories > 0;
@@ -104,11 +112,14 @@ export default async function StatsPage() {
                         }}
                       />
                     ) : (
-                      <div className="w-full rounded-t-lg bg-muted" style={{ height: 4 }} />
+                      <div
+                        className="w-full rounded-t-lg"
+                        style={{ height: 4, backgroundColor: isFuture ? 'transparent' : 'hsl(var(--muted))' }}
+                      />
                     )}
                   </div>
                   <span className={`text-[10px] font-medium ${
-                    isToday ? 'text-primary' : 'text-muted-foreground'
+                    isToday ? 'text-primary' : isFuture ? 'text-muted-foreground/30' : 'text-muted-foreground'
                   }`}>{label}</span>
                 </div>
               );
@@ -127,7 +138,7 @@ export default async function StatsPage() {
               {(weightHistory ?? []).slice(0, 5).map(entry => (
                 <div key={entry.date} className="flex justify-between text-sm">
                   <span className="text-muted-foreground">
-                    {format(new Date(entry.date + 'T00:00:00'), 'EEE, MMM d')}
+                    {format(new Date(entry.date + 'T00:00:00'), 'EEE, d MMM', { locale: dateLocale })}
                   </span>
                   <span className="font-semibold tabular-nums">{Number(entry.weight_kg).toFixed(1)} {t('unit.kg')}</span>
                 </div>

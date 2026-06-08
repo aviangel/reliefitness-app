@@ -1,10 +1,11 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { getT } from '@/lib/i18n/server';
+import { getT, getLang } from '@/lib/i18n/server';
 import type { TranslationKey } from '@/lib/i18n/translations';
 import { DEFAULT_PROFILE } from '@/types/health';
 import type { MealLogEntry } from '@/types/health';
 import { format } from 'date-fns';
+import { he as heLocale } from 'date-fns/locale';
 import { FypFeed, type FypData } from '@/components/health/fyp/FypFeed';
 
 export const revalidate = 0;
@@ -21,6 +22,8 @@ const TYPE_EMOJI: Record<string, string> = {
 
 export default async function DashboardPage() {
   const t = getT();
+  const lang = getLang();
+  const dateLocale = lang === 'he' ? heLocale : undefined;
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -78,7 +81,7 @@ export default async function DashboardPage() {
 
   const data: FypData = {
     name: p.name,
-    dateLabel: format(new Date(), 'EEEE, d MMM'),
+    dateLabel: format(new Date(), 'EEEE, d MMM', { locale: dateLocale }),
     calories: totalCalories,
     calorieGoal: Number(p.calorie_goal),
     protein: totalProtein, proteinGoal: Number(p.protein_goal_g),

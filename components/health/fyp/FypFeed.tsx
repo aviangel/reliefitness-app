@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n/context';
 import { useTheme } from '@/lib/theme/context';
@@ -25,39 +25,59 @@ export interface FypData {
   workout: { hasWorkout: boolean; emoji: string; typesLabel: string; totalMin: number };
 }
 
-// Each panel = an "info pool" with its own signature gradient (light + dark).
 type Grad = { dark: string; light: string };
 const grad = (dark: string, light: string): Grad => ({ dark, light });
+
+const PANELS = 6;
+// Transition duration in ms — controls swipe speed feel
+const TRANSITION_MS = 420;
 
 export function FypFeed(d: FypData) {
   const { t } = useI18n();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  const scrollRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
 
+  // Touch tracking
+  const touchStartY = useRef(0);
+  const touchStartTime = useRef(0);
+  const lastWheelTime = useRef(0);
+  const animating = useRef(false);
+
+  const goTo = (next: number) => {
+    if (animating.current) return;
+    const clamped = Math.max(0, Math.min(PANELS - 1, next));
+    if (clamped === active) return;
+    animating.current = true;
+    setActive(clamped);
+    setTimeout(() => { animating.current = false; }, TRANSITION_MS + 50);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchStartTime.current = Date.now();
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const delta = touchStartY.current - e.changedTouches[0].clientY;
+    const elapsed = Math.max(1, Date.now() - touchStartTime.current);
+    const velocity = Math.abs(delta) / elapsed; // px/ms
+    const threshold = velocity > 0.4 ? 25 : 55;
+    if (delta > threshold) goTo(active + 1);
+    else if (delta < -threshold) goTo(active - 1);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    const now = Date.now();
+    if (now - lastWheelTime.current < TRANSITION_MS + 100) return;
+    lastWheelTime.current = now;
+    if (e.deltaY > 15) goTo(active + 1);
+    else if (e.deltaY < -15) goTo(active - 1);
+  };
+
   const pick = (g: Grad) => (isDark ? g.dark : g.light);
-
-  // Track active panel for the side indicator.
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    let raf = 0;
-    const onScroll = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const i = Math.round(el.scrollTop / el.clientHeight);
-        setActive(i);
-      });
-    };
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => { el.removeEventListener('scroll', onScroll); cancelAnimationFrame(raf); };
-  }, []);
-
   const base = isDark ? '#0a0a0a' : '#f4f4f5';
-  const PANELS = 6;
 
-  // ── gradients per pool ──
   const gCal = grad(
     `radial-gradient(120% 80% at 50% 8%, rgba(34,197,94,0.32), transparent 55%), ${base}`,
     `radial-gradient(120% 80% at 50% 8%, rgba(34,197,94,0.28), transparent 55%), ${base}`,
@@ -101,9 +121,14 @@ export function FypFeed(d: FypData) {
   const loggedCount = mealsByType.filter(m => m.has).length;
 
   return (
-    <div className="absolute inset-0">
+    <div
+      className="absolute inset-0 overflow-hidden"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onWheel={handleWheel}
+    >
       {/* Side panel indicator */}
-      <div className="absolute end-2.5 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2">
+      <div className="absolute end-2.5 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2 pointer-events-none">
         {Array.from({ length: PANELS }).map((_, i) => (
           <div
             key={i}
@@ -117,8 +142,15 @@ export function FypFeed(d: FypData) {
         ))}
       </div>
 
-      <div ref={scrollRef} className="absolute inset-0 overflow-y-scroll no-scrollbar snap-pager">
-
+      {/* Sliding strip — each panel is 1/PANELS of strip height = 100% of container */}
+      <div
+        style={{
+          height: `${PANELS * 100}%`,
+          transform: `translateY(${-(active / PANELS) * 100}%)`,
+          transition: `transform ${TRANSITION_MS}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
+          willChange: 'transform',
+        }}
+      >
         {/* ── 1 · CALORIES ── */}
         <Panel bg={pick(gCal)}>
           <div className="flex items-start justify-between">
@@ -296,8 +328,8 @@ export function FypFeed(d: FypData) {
 function Panel({ children, bg }: { children: React.ReactNode; bg: string }) {
   return (
     <section
-      className="snap-panel w-full flex flex-col px-5 pt-[max(20px,env(safe-area-inset-top))] pb-28"
-      style={{ height: '100%', minHeight: '100%', background: bg }}
+      className="flex flex-col px-5 pt-[max(20px,env(safe-area-inset-top))] pb-28"
+      style={{ height: `${100 / PANELS}%`, background: bg }}
     >
       {children}
     </section>

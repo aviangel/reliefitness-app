@@ -3,9 +3,10 @@ import { redirect } from 'next/navigation';
 import { DeleteMealButton } from '@/components/health/DeleteMealButton';
 import { MEAL_TYPES } from '@/lib/health/constants';
 import { ScrollShell } from '@/components/health/ScrollShell';
-import { getT } from '@/lib/i18n/server';
+import { getT, getLang } from '@/lib/i18n/server';
 import type { MealLogEntry, MealType } from '@/types/health';
 import { format } from 'date-fns';
+import { he as heLocale } from 'date-fns/locale';
 import Link from 'next/link';
 import { Plus, UtensilsCrossed } from 'lucide-react';
 
@@ -13,6 +14,8 @@ export const revalidate = 0;
 
 export default async function MealsPage() {
   const t = getT();
+  const lang = getLang();
+  const dateLocale = lang === 'he' ? heLocale : undefined;
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -41,7 +44,7 @@ export default async function MealsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-[20px] font-black">{t('meals.title')}</h1>
-            <p className="text-[11px] text-muted-foreground font-medium">{format(new Date(), 'EEEE, MMMM d')}</p>
+            <p className="text-[11px] text-muted-foreground font-medium">{format(new Date(), 'EEEE, d MMMM', { locale: dateLocale })}</p>
           </div>
           <div className="text-right">
             <p
