@@ -9,7 +9,7 @@ import { DEFAULT_PROFILE } from '@/types/health';
 import type { MealLogEntry } from '@/types/health';
 import { format } from 'date-fns';
 import Link from 'next/link';
-import { Scale, Plus, TrendingDown, Droplets, Dumbbell, BarChart2, Settings, Flame } from 'lucide-react';
+import { Scale, Plus, Droplets, Dumbbell, BarChart2, Settings, Flame } from 'lucide-react';
 
 export const revalidate = 0;
 
@@ -81,54 +81,47 @@ export default async function DashboardPage() {
   const waterPct = Math.min(totalWaterMl / WATER_GOAL_ML, 1);
   const totalWorkoutMin = workouts.reduce((s, w) => s + (w.duration_minutes ?? 0), 0);
 
-  const dateLabel = format(new Date(), 'EEEE, MMMM d');
-
   return (
-    <div className="p-4 pb-2 space-y-4">
+    <div className="p-4 space-y-3">
 
       {/* ── Header ── */}
-      <div className="flex items-center justify-between pt-2">
+      <div className="flex items-center justify-between pt-1">
         <div>
-          <h1 className="text-[22px] font-black gradient-text leading-tight">
+          <h1 className="text-[20px] font-black gradient-text leading-none">
             {t('dash.greeting', { name: p.name })}
           </h1>
-          <p className="text-xs text-muted-foreground font-medium mt-0.5">{dateLabel}</p>
+          <p className="text-[11px] text-muted-foreground/60 font-medium mt-1">
+            {format(new Date(), 'EEEE, d MMM')}
+          </p>
         </div>
         <div className="flex items-center gap-1.5">
-          <Link
-            href="/stats"
-            className="w-9 h-9 flex items-center justify-center rounded-xl text-muted-foreground/70 hover:text-foreground hover:bg-white/[0.05] transition-colors"
-          >
-            <BarChart2 size={18} />
+          <Link href="/stats" className="w-9 h-9 flex items-center justify-center rounded-xl text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+            <BarChart2 size={17} />
           </Link>
-          <Link
-            href="/settings"
-            className="w-9 h-9 flex items-center justify-center rounded-xl text-muted-foreground/70 hover:text-foreground hover:bg-white/[0.05] transition-colors"
-          >
-            <Settings size={18} />
+          <Link href="/settings" className="w-9 h-9 flex items-center justify-center rounded-xl text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+            <Settings size={17} />
           </Link>
           <Link
             href="/weight"
-            className={`flex flex-col items-center rounded-2xl px-3.5 py-2 border transition-all ms-1 ${
+            className={`flex flex-col items-center justify-center rounded-[14px] w-14 h-11 border transition-all ${
               todayHasWeight
-                ? 'bg-primary/10 border-primary/30 shadow-[0_0_16px_rgba(34,197,94,0.15)]'
-                : 'bg-[#111] border-white/[0.07] hover:border-primary/30'
+                ? 'bg-primary/10 border-primary/30'
+                : 'bg-[#111] border-white/[0.07]'
             }`}
           >
-            <span className="text-[15px] font-black tabular-nums leading-tight">
+            <span className="text-[15px] font-black tabular-nums leading-none">
               {Number(currentWeight).toFixed(1)}
             </span>
-            <span className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wide">
+            <span className="text-[9px] text-muted-foreground/60 font-bold uppercase tracking-wider mt-0.5">
               {t('unit.kg')}
             </span>
           </Link>
         </div>
       </div>
 
-      {/* ── Calorie ring + macros card ── */}
+      {/* ── Calorie ring + macros ── */}
       <div
-        className="bg-[#111111] border border-white/[0.06] rounded-[24px] p-5 flex flex-col items-center gap-5"
-        style={{ boxShadow: '0 4px 40px rgba(34,197,94,0.05), 0 1px 0 rgba(255,255,255,0.04) inset' }}
+        className="bg-[#111111] border border-white/[0.06] rounded-[24px] px-5 pt-5 pb-4 flex flex-col items-center gap-4"
       >
         <CalorieRing calories={totalCalories} goal={Number(p.calorie_goal)} />
         <MacrosBars
@@ -141,130 +134,114 @@ export default async function DashboardPage() {
         />
       </div>
 
-      {/* ── Quick stats row ── */}
+      {/* ── Stats row: weight goal + water ── */}
       <div className="grid grid-cols-2 gap-3">
 
         {/* Weight goal */}
         <div className="bg-[#111111] border border-white/[0.06] rounded-[20px] p-4">
-          <div className="flex items-center gap-1.5 mb-2.5">
-            <TrendingDown size={13} className="text-primary" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              {t('dash.weightGoal')}
-            </span>
-          </div>
-          <p className="text-sm font-semibold text-muted-foreground mb-2.5">
-            {t('dash.toGo', { n: kgToGo.toFixed(1) })}
+          <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50 mb-2">
+            {t('dash.weightGoal')}
           </p>
-          <div className="h-[5px] bg-white/[0.06] rounded-full overflow-hidden">
+          <p className="text-[28px] font-black tabular-nums leading-none text-foreground">
+            {kgToGo.toFixed(1)}
+            <span className="text-sm font-bold text-muted-foreground/60 ms-1">{t('unit.kg')}</span>
+          </p>
+          <p className="text-[10px] text-muted-foreground/50 mt-1 mb-3">to go</p>
+          <div className="h-[4px] bg-white/[0.05] rounded-full overflow-hidden">
             <div
               className="h-full rounded-full bg-gradient-to-r from-primary to-[#00e5ff] transition-all duration-700"
               style={{ width: `${goalProgress}%` }}
             />
           </div>
-          <div className="flex justify-between text-[9px] text-muted-foreground/50 mt-1.5 font-medium">
-            <span>🎯 {Number(p.target_weight_kg)}</span>
-            <span>{Number(currentWeight).toFixed(1)}</span>
-          </div>
         </div>
 
         {/* Water */}
-        <Link
-          href="/drinks"
-          className="bg-[#111111] border border-white/[0.06] rounded-[20px] p-4 hover:border-blue-500/25 transition-colors block"
-        >
-          <div className="flex items-center gap-1.5 mb-2.5">
-            <Droplets size={13} className="text-blue-400" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              {t('dash.water')}
-            </span>
-          </div>
-          <p className="text-2xl font-black tabular-nums leading-none text-blue-400 mb-1">
+        <Link href="/drinks" className="bg-[#111111] border border-white/[0.06] rounded-[20px] p-4 block active:scale-[0.97] transition-transform">
+          <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50 mb-2">
+            {t('dash.water')}
+          </p>
+          <p className="text-[28px] font-black tabular-nums leading-none text-blue-400">
             {totalWaterMl >= 1000
-              ? `${(totalWaterMl / 1000).toFixed(1)}`
-              : `${totalWaterMl}`}
-            <span className="text-sm font-semibold ms-1">
+              ? (totalWaterMl / 1000).toFixed(1)
+              : totalWaterMl}
+            <span className="text-sm font-bold ms-1">
               {totalWaterMl >= 1000 ? t('unit.l') : t('unit.ml')}
             </span>
           </p>
-          <p className="text-[10px] text-muted-foreground mb-2.5">
-            {t('dash.waterGoal', { n: WATER_GOAL_ML / 1000 })}
+          <p className="text-[10px] text-muted-foreground/50 mt-1 mb-3">
+            / {WATER_GOAL_ML / 1000}{t('unit.l')}
           </p>
-          <div className="h-[5px] bg-white/[0.06] rounded-full overflow-hidden">
+          <div className="h-[4px] bg-white/[0.05] rounded-full overflow-hidden">
             <div
               className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-700"
               style={{ width: `${waterPct * 100}%` }}
             />
           </div>
         </Link>
+
       </div>
 
-      {/* ── Workout banner ── */}
+      {/* ── Workout ── */}
       {workouts.length > 0 ? (
         <Link
           href="/workout"
-          className="flex items-center gap-3.5 bg-primary/[0.08] border border-primary/20 rounded-[20px] px-4 py-3.5 hover:bg-primary/[0.12] transition-colors"
-          style={{ boxShadow: '0 0 24px rgba(34,197,94,0.08)' }}
+          className="flex items-center gap-3 bg-primary/[0.07] border border-primary/15 rounded-[18px] px-4 py-3 active:scale-[0.97] transition-transform"
         >
-          <span className="text-2xl">{TYPE_EMOJI[workouts[0].type] ?? '💪'}</span>
+          <span className="text-xl">{TYPE_EMOJI[workouts[0].type] ?? '💪'}</span>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-primary">{t('dash.workoutDone')}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {t('dash.workoutSummary', {
-                type: workouts.map((w) => t(`workout.${w.type}` as TranslationKey)).join(', '),
-                min: totalWorkoutMin,
-              })}
+            <p className="text-sm font-black text-primary leading-tight">{t('dash.workoutDone')}</p>
+            <p className="text-[11px] text-muted-foreground/60">
+              {workouts.map((w) => t(`workout.${w.type}` as TranslationKey)).join(', ')}
+              {totalWorkoutMin > 0 && ` · ${totalWorkoutMin} ${t('unit.min')}`}
             </p>
           </div>
-          <Flame size={18} className="text-primary/60 shrink-0" />
+          <Flame size={16} className="text-primary/50 shrink-0" />
         </Link>
       ) : (
         <Link
           href="/workout"
-          className="flex items-center gap-3.5 bg-[#111111] border border-white/[0.06] border-dashed rounded-[20px] px-4 py-3.5 hover:border-primary/25 transition-colors"
+          className="flex items-center gap-3 bg-[#111111] border border-dashed border-white/[0.08] rounded-[18px] px-4 py-3 active:scale-[0.97] transition-transform"
         >
-          <Dumbbell size={18} className="text-muted-foreground/40" />
-          <span className="text-sm text-muted-foreground/60 flex-1">{t('dash.noWorkout')}</span>
-          <Plus size={16} className="text-muted-foreground/40" />
+          <Dumbbell size={17} className="text-muted-foreground/30" />
+          <span className="text-sm text-muted-foreground/40 flex-1">{t('dash.noWorkout')}</span>
+          <Plus size={14} className="text-muted-foreground/30" />
         </Link>
       )}
 
       {/* ── Today's meals ── */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-[15px] font-black">{t('dash.todaysMeals')}</h2>
+        <div className="flex items-center justify-between mb-2.5">
+          <p className="text-[11px] font-black uppercase tracking-widest text-muted-foreground/50">
+            {t('dash.todaysMeals')}
+          </p>
           <Link
             href="/meals/log"
-            className="flex items-center gap-1 text-[11px] text-primary font-bold bg-primary/10 px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors"
+            className="w-7 h-7 rounded-full bg-white/[0.07] flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-colors"
           >
-            <Plus size={12} strokeWidth={3} />
-            {t('dash.addMeal')}
+            <Plus size={15} strokeWidth={2.5} />
           </Link>
         </div>
         <MealChecklist meals={allMeals} />
       </div>
 
-      {/* ── Bottom quick actions ── */}
-      <div className="grid grid-cols-2 gap-3 pb-4">
+      {/* ── Bottom actions ── */}
+      <div className="grid grid-cols-2 gap-3 pb-2">
         <Link
           href="/weight"
-          className="flex items-center gap-3 bg-[#111111] border border-white/[0.06] rounded-[20px] p-4 hover:border-white/[0.1] transition-colors"
+          className="flex items-center gap-2.5 bg-[#111111] border border-white/[0.06] rounded-[18px] px-4 py-3.5 active:scale-[0.97] transition-transform"
         >
-          <Scale size={19} className="text-muted-foreground/60 shrink-0" />
-          <div>
-            <p className="text-sm font-bold">{todayHasWeight ? t('dash.updateWeight') : t('dash.logWeight')}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">{t('dash.dailyCheckin')}</p>
-          </div>
+          <Scale size={18} className="text-muted-foreground/40 shrink-0" />
+          <p className="text-sm font-bold leading-tight">
+            {todayHasWeight ? t('dash.updateWeight') : t('dash.logWeight')}
+          </p>
         </Link>
         <Link
           href="/meals/log"
-          className="flex items-center gap-3 bg-primary/10 border border-primary/25 rounded-[20px] p-4 hover:bg-primary/15 transition-colors"
-          style={{ boxShadow: '0 0 20px rgba(34,197,94,0.1)' }}
+          className="flex items-center gap-2.5 bg-primary/10 border border-primary/20 rounded-[18px] px-4 py-3.5 active:scale-[0.97] transition-transform"
+          style={{ boxShadow: '0 0 20px rgba(34,197,94,0.08)' }}
         >
-          <Plus size={19} className="text-primary shrink-0" />
-          <div>
-            <p className="text-sm font-bold text-primary">{t('dash.logMeal')}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">{t('dash.quickAdd')}</p>
-          </div>
+          <Plus size={18} className="text-primary shrink-0" />
+          <p className="text-sm font-bold text-primary leading-tight">{t('dash.logMeal')}</p>
         </Link>
       </div>
 
