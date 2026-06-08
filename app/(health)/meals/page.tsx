@@ -36,15 +36,26 @@ export default async function MealsPage() {
 
   return (
     <div className="pb-4">
-      <div className="sticky top-0 bg-background/95 backdrop-blur border-b border-white/[0.07] px-4 py-4 z-10">
+      <div className="sticky top-0 bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-white/[0.06] px-4 py-4 z-10">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold">{t('meals.title')}</h1>
-            <p className="text-xs text-muted-foreground">{format(new Date(), 'EEEE, MMMM d')}</p>
+            <h1 className="text-[20px] font-black">{t('meals.title')}</h1>
+            <p className="text-[11px] text-muted-foreground font-medium">{format(new Date(), 'EEEE, MMMM d')}</p>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold gradient-text tabular-nums">{totalCal}</p>
-            <p className="text-xs text-muted-foreground">{t('meals.proteinTotal', { n: totalProtein })}</p>
+            <p
+              className="font-black tabular-nums leading-none"
+              style={{
+                fontSize: '1.75rem',
+                background: 'linear-gradient(135deg, #22c55e, #00e5ff)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              {totalCal}
+            </p>
+            <p className="text-[11px] text-muted-foreground">{t('meals.proteinTotal', { n: totalProtein })}</p>
           </div>
         </div>
       </div>
@@ -62,24 +73,37 @@ export default async function MealsPage() {
           if (entries.length === 0) return null;
           const mealCal = Math.round(entries.reduce((s, m) => s + (m.calories ?? 0), 0));
           return (
-            <div key={id} className="glass-card rounded-2xl overflow-hidden">
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.05]">
-                <span className="text-base">{emoji}</span>
-                <span className="text-sm font-semibold">{t(labelKey)}</span>
-                <span className="text-xs text-muted-foreground ml-auto">{time === 'Anytime' ? t('mealtime.anytime') : time}</span>
-                <span className="text-xs font-bold text-primary ml-2">{mealCal} kcal</span>
+            <div key={id} className="bg-[#111111] border border-white/[0.06] rounded-[20px] overflow-hidden">
+              <div className="flex items-center gap-2.5 px-4 py-3 border-b border-white/[0.05]">
+                <span className="text-xl">{emoji}</span>
+                <span className="text-sm font-bold">{t(labelKey)}</span>
+                <span className="text-[10px] text-muted-foreground/60 font-medium ms-1">
+                  {time === 'Anytime' ? t('mealtime.anytime') : time}
+                </span>
+                <span
+                  className="text-sm font-black tabular-nums ms-auto"
+                  style={{
+                    background: 'linear-gradient(135deg, #22c55e, #00e5ff)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
+                  {mealCal}
+                  <span className="text-[10px] font-normal text-muted-foreground ms-0.5" style={{ WebkitTextFillColor: 'unset', background: 'none' }}>kcal</span>
+                </span>
               </div>
               {entries.map(entry => (
                 <div key={entry.id} className="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.04] last:border-0">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{entry.food_name ?? t('meals.unknownFood')}</p>
+                    <p className="text-sm font-semibold truncate">{entry.food_name ?? t('meals.unknownFood')}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-muted-foreground">{entry.portion_g}g</span>
+                      <span className="text-[11px] text-muted-foreground">{entry.portion_g}g</span>
                       {entry.calories != null && (
-                        <span className="text-xs text-primary font-semibold">{Math.round(entry.calories)} kcal</span>
+                        <span className="text-[11px] text-primary font-bold">{Math.round(entry.calories)} kcal</span>
                       )}
                       {entry.protein_g != null && (
-                        <span className="text-xs text-blue-400">{t('meals.proteinShort', { n: entry.protein_g })}</span>
+                        <span className="text-[11px] text-blue-400 font-medium">{t('meals.proteinShort', { n: entry.protein_g })}</span>
                       )}
                     </div>
                   </div>

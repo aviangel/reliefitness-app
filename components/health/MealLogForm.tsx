@@ -69,12 +69,17 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
 
   if (done) {
     return (
-      <div className="flex flex-col items-center justify-center h-48 gap-3">
-        <div className="w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center">
-          <CheckCircle2 size={36} className="text-primary" />
+      <div className="flex flex-col items-center justify-center h-56 gap-4">
+        <div
+          className="w-20 h-20 rounded-[28px] flex items-center justify-center shadow-[0_0_32px_rgba(34,197,94,0.4)]"
+          style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}
+        >
+          <CheckCircle2 size={40} className="text-black" strokeWidth={2.5} />
         </div>
-        <p className="text-lg font-semibold">{t('form.logged')}</p>
-        <p className="text-sm text-muted-foreground">{t('form.headingBack')}</p>
+        <div className="text-center">
+          <p className="text-xl font-black">{t('form.logged')}</p>
+          <p className="text-sm text-muted-foreground mt-1">{t('form.headingBack')}</p>
+        </div>
       </div>
     );
   }
@@ -177,7 +182,7 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
                   key={food.name}
                   type="button"
                   onClick={() => { setSelectedFood(food); setPortionMult(1.0); setSearch(''); }}
-                  className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:border-primary/30 hover:bg-primary/5 transition-all text-left"
+                  className="w-full flex items-center gap-3 px-3.5 py-3 rounded-[14px] border border-white/[0.06] bg-[#111111] hover:border-primary/30 hover:bg-primary/[0.05] transition-all text-left active:scale-[0.98]"
                 >
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{food.name}</p>
@@ -232,23 +237,34 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
 
       {/* Nutrition preview */}
       {selectedFood && (
-        <div className="glass-card rounded-2xl p-4">
+        <div className="bg-[#111111] border border-white/[0.07] rounded-[20px] p-4">
           <div className="text-center mb-4">
-            <span className="text-4xl font-bold gradient-text tabular-nums">{estCal}</span>
-            <span className="text-lg text-muted-foreground ml-1">{t('unit.kcal')}</span>
+            <span
+              className="font-black tabular-nums leading-none"
+              style={{
+                fontSize: '3rem',
+                background: 'linear-gradient(135deg, #22c55e, #00e5ff)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              {estCal}
+            </span>
+            <span className="text-lg text-muted-foreground ms-1">{t('unit.kcal')}</span>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="bg-blue-500/10 rounded-xl p-2.5">
-              <div className="text-sm font-bold text-blue-400 tabular-nums">{calcNutrient(selectedFood.protein_per_100g)}g</div>
-              <div className="text-xs text-muted-foreground">{t('form.protein')}</div>
+            <div className="bg-blue-500/[0.08] border border-blue-500/[0.12] rounded-2xl p-3">
+              <div className="text-base font-black text-blue-400 tabular-nums">{calcNutrient(selectedFood.protein_per_100g)}g</div>
+              <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">{t('form.protein')}</div>
             </div>
-            <div className="bg-amber-500/10 rounded-xl p-2.5">
-              <div className="text-sm font-bold text-amber-400 tabular-nums">{calcNutrient(selectedFood.carbs_per_100g)}g</div>
-              <div className="text-xs text-muted-foreground">{t('form.carbs')}</div>
+            <div className="bg-amber-500/[0.08] border border-amber-500/[0.12] rounded-2xl p-3">
+              <div className="text-base font-black text-amber-400 tabular-nums">{calcNutrient(selectedFood.carbs_per_100g)}g</div>
+              <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">{t('form.carbs')}</div>
             </div>
-            <div className="bg-pink-500/10 rounded-xl p-2.5">
-              <div className="text-sm font-bold text-pink-400 tabular-nums">{calcNutrient(selectedFood.fat_per_100g)}g</div>
-              <div className="text-xs text-muted-foreground">{t('form.fat')}</div>
+            <div className="bg-pink-500/[0.08] border border-pink-500/[0.12] rounded-2xl p-3">
+              <div className="text-base font-black text-pink-400 tabular-nums">{calcNutrient(selectedFood.fat_per_100g)}g</div>
+              <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">{t('form.fat')}</div>
             </div>
           </div>
         </div>
@@ -262,11 +278,14 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
         type="button"
         onClick={handleSubmit}
         disabled={!selectedFood || isPending}
-        className={`w-full py-4 rounded-2xl font-semibold text-sm transition-all ${
+        className={`w-full py-4 rounded-[20px] font-black text-[15px] tracking-wide transition-all active:scale-[0.98] ${
           selectedFood && !isPending
-            ? 'bg-primary text-primary-foreground shadow-[0_4px_20px_rgba(34,197,94,0.3)] hover:opacity-90 active:scale-[0.98]'
+            ? 'text-black shadow-[0_4px_24px_rgba(34,197,94,0.4)]'
             : 'bg-white/[0.04] text-muted-foreground cursor-not-allowed'
         }`}
+        style={selectedFood && !isPending ? {
+          background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+        } : undefined}
       >
         {isPending
           ? t('common.logging')

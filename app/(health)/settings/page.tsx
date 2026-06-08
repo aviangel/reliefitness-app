@@ -32,9 +32,9 @@ export default async function SettingsPage() {
 
   return (
     <div>
-      <div className="px-4 py-5 border-b border-border">
-        <h1 className="text-xl font-bold">{t('settings.title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('settings.subtitle')}</p>
+      <div className="px-4 pt-6 pb-4 border-b border-white/[0.06]">
+        <h1 className="text-[20px] font-black">{t('settings.title')}</h1>
+        <p className="text-[11px] text-muted-foreground font-medium mt-0.5">{t('settings.subtitle')}</p>
       </div>
       <SettingsForm
         calorieGoal={Number(p.calorie_goal)}

@@ -64,40 +64,40 @@ export function SettingsForm({
   ];
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-5">
       {/* Profile info */}
-      <div className="bg-card rounded-2xl border border-border p-4 space-y-3">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t('settings.profile')}</h2>
-        <div className="flex justify-between">
+      <div className="bg-[#111111] border border-white/[0.06] rounded-[20px] p-4 space-y-3.5">
+        <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t('settings.profile')}</h2>
+        <div className="flex justify-between items-center">
           <span className="text-sm text-muted-foreground">{t('settings.currentWeight')}</span>
-          <span className="text-sm font-semibold">{currentWeight.toFixed(1)} {t('unit.kg')}</span>
+          <span className="text-sm font-black tabular-nums">{currentWeight.toFixed(1)} <span className="text-muted-foreground font-normal">{t('unit.kg')}</span></span>
         </div>
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <span className="text-sm text-muted-foreground">{t('settings.targetWeight')}</span>
-          <span className="text-sm font-semibold text-primary">{targetWeight.toFixed(1)} {t('unit.kg')}</span>
+          <span className="text-sm font-black tabular-nums text-primary">{targetWeight.toFixed(1)} <span className="text-muted-foreground font-normal text-sm">{t('unit.kg')}</span></span>
         </div>
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center border-t border-white/[0.05] pt-3">
           <span className="text-sm text-muted-foreground">{t('settings.toLose')}</span>
-          <span className="text-sm font-semibold">{Math.max(0, currentWeight - targetWeight).toFixed(1)} {t('unit.kg')}</span>
+          <span className="text-sm font-black tabular-nums">{Math.max(0, currentWeight - targetWeight).toFixed(1)} <span className="text-muted-foreground font-normal">{t('unit.kg')}</span></span>
         </div>
       </div>
 
       <LanguageToggle />
 
       {/* Goals */}
-      <div className="bg-card rounded-2xl border border-border p-4 space-y-4">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t('settings.dailyGoals')}</h2>
+      <div className="bg-[#111111] border border-white/[0.06] rounded-[20px] p-4 space-y-4">
+        <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t('settings.dailyGoals')}</h2>
         {fields.map(({ labelKey, value, set, unit, color }) => (
           <div key={labelKey} className="flex items-center gap-3">
-            <label className="text-sm flex-1">{t(labelKey)}</label>
+            <label className="text-sm flex-1 font-medium">{t(labelKey)}</label>
             <div className="flex items-center gap-2">
               <input
                 type="number"
                 value={value}
                 onChange={e => set(e.target.value)}
-                className="w-20 bg-muted border border-border rounded-xl px-3 py-2 text-sm text-right font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-20 bg-black/40 border border-white/[0.08] rounded-[12px] px-3 py-2 text-sm text-right font-black tabular-nums focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/30 transition-all"
               />
-              <span className={`text-xs font-medium w-8 ${color}`}>{unit}</span>
+              <span className={`text-xs font-bold w-7 ${color}`}>{unit}</span>
             </div>
           </div>
         ))}
@@ -107,23 +107,23 @@ export function SettingsForm({
         type="button"
         onClick={handleSave}
         disabled={isPending || saved}
-        className={`w-full py-4 rounded-2xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
-          saved
-            ? 'bg-primary/20 text-primary'
-            : isPending
-            ? 'bg-muted text-muted-foreground cursor-not-allowed'
-            : 'bg-primary text-primary-foreground hover:opacity-90 active:scale-[0.98]'
-        }`}
+        className="w-full py-4 rounded-[18px] font-black text-[15px] transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+        style={saved
+          ? { background: 'rgba(34,197,94,0.15)', color: '#22c55e' }
+          : isPending
+          ? { background: '#1a1a1a', color: '#555' }
+          : { background: 'linear-gradient(135deg, #22c55e, #16a34a)', color: '#000', boxShadow: '0 4px 24px rgba(34,197,94,0.35)' }
+        }
       >
         {saved ? <><CheckCircle2 size={18} /> {t('settings.saved')}</> : isPending ? t('common.saving') : t('settings.saveGoals')}
       </button>
 
       {/* Sign out */}
-      <div className="pt-2">
+      <div className="pb-4">
         <button
           type="button"
           onClick={handleSignOut}
-          className="w-full py-4 rounded-2xl border border-border text-muted-foreground text-sm font-medium flex items-center justify-center gap-2 hover:border-destructive/50 hover:text-destructive transition-colors"
+          className="w-full py-4 rounded-[18px] border border-white/[0.07] bg-[#111111] text-muted-foreground text-sm font-semibold flex items-center justify-center gap-2 hover:border-red-500/30 hover:text-red-400 transition-colors"
         >
           <LogOut size={16} />
           {t('settings.signOut')}
