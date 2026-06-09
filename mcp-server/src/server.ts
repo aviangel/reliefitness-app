@@ -449,6 +449,18 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
           required: [],
         },
       },
+      {
+        name: 'get_calorie_history',
+        description:
+          'Daily calorie history with TDEE comparison. Returns deficit/maintenance/surplus status, total calories, and delta vs maintenance for each day. Use this to monitor weight-loss progress, spot problem days, and decide whether to adjust the calorie goal.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            days: { type: 'number', description: 'How many days to look back (default 30).' },
+          },
+          required: [],
+        },
+      },
     ],
   }));
 
@@ -480,6 +492,18 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
           const totalBurned = workouts.reduce((s, w) => s + (w.calories_burned ?? 0), 0);
           const totalWater = drinks.filter((x) => x.type === 'water').reduce((s, x) => s + x.amount_ml, 0);
           const waterGoal = p?.water_goal_ml ?? 2500;
+          // TDEE via Mifflin-St Jeor
+          const weightKg = weights[0] ? Number(weights[0].weight_kg) : Number(p?.current_weight_kg ?? 80);
+          const heightCm = Number(p?.height_cm ?? 175);
+          const age = new Date().getFullYear() - Number(p?.birth_year ?? 2000);
+          const sexOffset = p?.sex === 'female' ? -161 : 5;
+          const activityMultiplier: Record<string, number> = {
+            sedentary: 1.2, lightly_active: 1.375, moderately_active: 1.55,
+            very_active: 1.725, extra_active: 1.9,
+          };
+          const bmr = 10 * weightKg + 6.25 * heightCm - 5 * age + sexOffset;
+          const tdee = Math.round(bmr * (activityMultiplier[p?.activity_level ?? 'lightly_active'] ?? 1.375));
+          const calorieStatus = totalCal > tdee + 50 ? 'surplus' : totalCal < tdee - 50 ? 'deficit' : 'maintenance';
           return {
             content: [{
               type: 'text', text: JSON.stringify({
@@ -487,6 +511,7 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
                 calories: {
                   eaten: totalCal, goal: p?.calorie_goal ?? 2000, remaining: (p?.calorie_goal ?? 2000) - totalCal,
                   burned: totalBurned, net: totalCal - totalBurned,
+                  tdee, delta_from_maintenance: totalCal - tdee, status: calorieStatus,
                 },
                 macros: {
                   protein: { eaten: round1(meals.reduce((s, m) => s + (m.protein_g ?? 0), 0)), goal: p?.protein_goal_g ?? 150 },
@@ -1159,6 +1184,34 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
             });
           }
           return { content: [{ type: 'text', text: JSON.stringify({ period_weeks: weeks, planned_days_per_cycle: plannedDays || null, total_completed: sessions.length, weekly, ready_to_progress: readyChecks }, null, 2) }] };
+        }
+
+        case 'get_calorie_history': {
+          const days = Number(a.days ?? 30);
+          const since = new Date();
+          since.setDate(since.getDate() - days + 1);
+          const sinceDate = since.toISOString().split('T')[0];
+          const { data, error } = await supabase
+            .from('daily_calorie_status')
+            .select('*')
+            .eq('user_id', userId)
+            .gte('date', sinceDate)
+            .order('date', { ascending: false });
+          if (error) throw new McpError(ErrorCode.InternalError, error.message);
+          const rows = (data ?? []) as any[];
+          const counts = { deficit: 0, maintenance: 0, surplus: 0 } as Record<string, number>;
+          let totalDelta = 0;
+          for (const r of rows) { counts[r.status] = (counts[r.status] ?? 0) + 1; totalDelta += r.delta_from_tdee; }
+          return {
+            content: [{
+              type: 'text', text: JSON.stringify({
+                days_with_data: rows.length,
+                summary: counts,
+                avg_daily_delta_from_tdee: rows.length ? Math.round(totalDelta / rows.length) : null,
+                history: rows,
+              }, null, 2),
+            }],
+          };
         }
 
         default:

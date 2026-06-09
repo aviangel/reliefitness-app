@@ -210,6 +210,11 @@ export const translations = {
     'ring.over': '+{n} over goal',
     'ring.remaining': '{n} kcal remaining',
     'ring.dailyGoal': 'Daily goal: {n} kcal',
+    'ring.deficit': 'Deficit',
+    'ring.maintenance': 'Maintenance',
+    'ring.surplus': 'Surplus',
+    'ring.toMaintenance': '{n} kcal to maintenance',
+    'ring.pastMaintenance': '{n} kcal past maintenance',
 
     // ── FYP feed ──
     'fyp.swipe': 'Swipe',
@@ -551,6 +556,11 @@ export const translations = {
     'ring.over': '+{n} מעל היעד',
     'ring.remaining': 'נותרו {n} קל׳',
     'ring.dailyGoal': 'יעד יומי: {n} קל׳',
+    'ring.deficit': 'גרעון',
+    'ring.maintenance': 'תחזוקה',
+    'ring.surplus': 'עודף',
+    'ring.toMaintenance': '{n} קל׳ לתחזוקה',
+    'ring.pastMaintenance': '{n} קל׳ מעל תחזוקה',
 
     // ── FYP feed ──
     'fyp.swipe': 'החלק',
