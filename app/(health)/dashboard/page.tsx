@@ -28,7 +28,7 @@ export default async function DashboardPage() {
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
-  const [mealsRes, profileRes, weightRes, drinksRes, workoutRes] = await Promise.all([
+  const [mealsRes, profileRes, weightRes, drinksRes, workoutRes, stepsRes] = await Promise.all([
     supabase
       .from('meals_log')
       .select('id,meal_type,food_name,food_name_he,portion_g,calories,protein_g,carbs_g,fat_g,status,logged_at')
@@ -54,9 +54,16 @@ export default async function DashboardPage() {
       .eq('date', today)
       .order('logged_at', { ascending: false })
       .limit(3),
+    supabase
+      .from('steps_log')
+      .select('steps')
+      .eq('user_id', user.id)
+      .eq('date', today)
+      .single(),
   ]);
 
   const allMeals = (mealsRes.data ?? []) as MealLogEntry[];
+  const stepsToday = (stepsRes.data as { steps: number } | null)?.steps ?? 0;
   const profile = profileRes.data;
   const weightHistory = weightRes.data as WeightEntry[] | null;
   const drinks = (drinksRes.data ?? []) as DrinkEntry[];
@@ -106,6 +113,7 @@ export default async function DashboardPage() {
       typesLabel: workouts.map((w) => t(`workout.${w.type}` as TranslationKey)).join(', '),
       totalMin: totalWorkoutMin,
     },
+    stepsToday,
   };
 
   return <FypFeed {...data} />;

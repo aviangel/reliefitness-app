@@ -273,6 +273,11 @@ export const translations = {
     'steps.placeholder': 'e.g. 8000',
     'steps.invalid': 'Enter a valid step count',
     'steps.avg': 'Avg steps',
+    'steps.start': 'Start counting steps',
+    'steps.counting': 'Counting steps…',
+    'steps.permDenied': 'Motion access denied — allow in device Settings',
+    'steps.unsupported': 'Step counting not supported on this device',
+    'steps.goal': '{n}k goal',
 
     // ── Slips ──
     'slips.title': 'Slips',
@@ -567,6 +572,11 @@ export const translations = {
     'steps.placeholder': 'למשל 8000',
     'steps.invalid': 'הזן מספר צעדים תקין',
     'steps.avg': 'צעדים בממוצע',
+    'steps.start': 'התחל לספור צעדים',
+    'steps.counting': 'סופר צעדים…',
+    'steps.permDenied': 'גישה לתנועה נדחתה — אפשר בהגדרות המכשיר',
+    'steps.unsupported': 'ספירת צעדים אינה נתמכת במכשיר זה',
+    'steps.goal': 'יעד {n}k',
 
     // ── Slips ──
     'slips.title': 'מעידות',

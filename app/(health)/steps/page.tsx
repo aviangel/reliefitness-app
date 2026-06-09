@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { StepsLogForm } from '@/components/health/StepsLogForm';
+import { StepCounterLive } from '@/components/health/StepCounterLive';
 import { ScrollShell } from '@/components/health/ScrollShell';
 import { getT, getLang } from '@/lib/i18n/server';
 import { format, parseISO } from 'date-fns';
@@ -53,10 +53,7 @@ export default async function StepsPage() {
           </div>
         )}
 
-        <div className="glass-card rounded-3xl p-4">
-          <h2 className="font-semibold mb-4">{t('steps.logToday')}</h2>
-          <StepsLogForm currentSteps={todayEntry?.steps} />
-        </div>
+        <StepCounterLive initialSteps={todayEntry?.steps ?? 0} />
 
         {entries.length > 0 ? (
           <div>

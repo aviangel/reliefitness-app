@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n/context';
 import { useTheme } from '@/lib/theme/context';
@@ -25,6 +25,7 @@ export interface FypData {
   waterMl: number; waterGoalMl: number;
   currentWeight: number; targetWeight: number; kgToGo: number; goalProgress: number; todayHasWeight: boolean;
   workout: { hasWorkout: boolean; emoji: string; typesLabel: string; totalMin: number };
+  stepsToday: number;
 }
 
 type Grad = { dark: string; light: string };
@@ -39,6 +40,19 @@ export function FypFeed(d: FypData) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [active, setActive] = useState(0);
+  const [liveSteps, setLiveSteps] = useState(d.stepsToday);
+
+  // Sync steps from localStorage (updated by StepCounterLive on /steps page)
+  useEffect(() => {
+    const key = `rf-steps-${new Date().toISOString().slice(0, 10)}`;
+    const read = () => {
+      const stored = parseInt(localStorage.getItem(key) ?? '0', 10);
+      setLiveSteps(prev => Math.max(prev, stored));
+    };
+    read();
+    const id = setInterval(read, 5000);
+    return () => clearInterval(id);
+  }, []);
 
   // Touch tracking
   const touchStartY = useRef(0);
@@ -171,6 +185,23 @@ export function FypFeed(d: FypData) {
               <IconLink href="/settings" muted={muted}><Settings size={18} /></IconLink>
             </div>
           </div>
+
+          {/* Steps strip — tappable, syncs from localStorage */}
+          <Link href="/steps" className="flex items-center gap-2.5 px-3 py-2 rounded-2xl mt-3 active:scale-[0.97] transition-transform" style={{ background: track }}>
+            <Footprints size={16} className="text-lime-500 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline justify-between mb-1">
+                <span className="text-sm font-black tabular-nums text-lime-500">{liveSteps.toLocaleString()}</span>
+                <span className="text-[11px] font-bold" style={{ color: muted }}>/ 10k</span>
+              </div>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }}>
+                <div
+                  className="h-full rounded-full bg-lime-500 transition-all duration-500"
+                  style={{ width: `${Math.min(liveSteps / 10000, 1) * 100}%` }}
+                />
+              </div>
+            </div>
+          </Link>
 
           <div className="flex-1 flex items-center justify-center">
             <div className="fyp-enter scale-[1.18]">
