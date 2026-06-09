@@ -284,6 +284,41 @@ export function createMcpServer(supabase, userId) {
                     required: [],
                 },
             },
+            {
+                name: 'get_workout_session',
+                description: 'Get full details of a guided workout session for a date (default most recent): every exercise, each set with weight/reps, total volume, duration and estimated calories.',
+                inputSchema: {
+                    type: 'object',
+                    properties: { date: { type: 'string', description: 'YYYY-MM-DD. Omit for the most recent completed session.' } },
+                    required: [],
+                },
+            },
+            {
+                name: 'get_workout_progression',
+                description: 'Show weight/rep history over time for a single exercise (by name), one entry per session, oldest to newest. Use to see if the user is progressing on a specific lift.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        exercise_name: { type: 'string', description: 'Exercise name or partial match, e.g. "incline" or "lat pulldown".' },
+                        limit: { type: 'number', description: 'Number of past sessions (default 10).' },
+                    },
+                    required: ['exercise_name'],
+                },
+            },
+            {
+                name: 'get_volume_trend',
+                description: 'Total training volume (kg lifted) per week over the last N weeks, plus session counts.',
+                inputSchema: {
+                    type: 'object',
+                    properties: { weeks: { type: 'number', description: 'Number of weeks (default 8).' } },
+                    required: [],
+                },
+            },
+            {
+                name: 'get_personal_records',
+                description: 'All-time personal records per exercise: heaviest weight and best estimated 1-rep max.',
+                inputSchema: { type: 'object', properties: {}, required: [] },
+            },
         ],
     }));
     server.setRequestHandler(CallToolRequestSchema, async (req) => {
@@ -662,6 +697,120 @@ export function createMcpServer(supabase, userId) {
                 case 'get_steps': {
                     const { data } = await supabase.from('steps_log').select('id,date,steps').eq('user_id', userId).order('date', { ascending: false }).limit(a.limit ?? 14);
                     return { content: [{ type: 'text', text: JSON.stringify(data ?? [], null, 2) }] };
+                }
+                case 'get_workout_session': {
+                    let sessionQuery = supabase
+                        .from('workout_sessions')
+                        .select('id,date,started_at,ended_at,completed_status,total_volume_kg,estimated_calories,template_id')
+                        .eq('user_id', userId)
+                        .eq('completed_status', 'completed');
+                    if (a.date)
+                        sessionQuery = sessionQuery.eq('date', a.date);
+                    const { data: sess } = await sessionQuery.order('ended_at', { ascending: false }).limit(1).maybeSingle();
+                    if (!sess)
+                        return { content: [{ type: 'text', text: 'No completed workout session found.' }] };
+                    const [{ data: tpl }, { data: setRows }] = await Promise.all([
+                        supabase.from('workout_templates').select('day_name,phase').eq('id', sess.template_id).maybeSingle(),
+                        supabase.from('workout_set_log').select('exercise_id,set_number,weight_kg,reps,was_failure').eq('session_id', sess.id).order('set_number'),
+                    ]);
+                    const sets = (setRows ?? []);
+                    const exIds = Array.from(new Set(sets.map((s) => s.exercise_id)));
+                    const { data: exRows } = await supabase.from('exercises').select('id,name_en').in('id', exIds.length ? exIds : ['00000000-0000-0000-0000-000000000000']);
+                    const nameById = new Map((exRows ?? []).map((e) => [e.id, e.name_en]));
+                    const byExercise = exIds.map((id) => ({
+                        exercise: nameById.get(id) ?? 'Exercise',
+                        sets: sets.filter((s) => s.exercise_id === id).map((s) => ({ set: s.set_number, weight_kg: Number(s.weight_kg), reps: s.reps, failure: s.was_failure })),
+                    }));
+                    return { content: [{ type: 'text', text: JSON.stringify({
+                                    date: sess.date,
+                                    day: tpl?.day_name ?? null,
+                                    phase: tpl?.phase ?? null,
+                                    total_volume_kg: Number(sess.total_volume_kg),
+                                    estimated_calories: sess.estimated_calories,
+                                    exercises: byExercise,
+                                }, null, 2) }] };
+                }
+                case 'get_workout_progression': {
+                    const term = String(a.exercise_name ?? '').trim();
+                    const { data: matches } = await supabase.from('exercises').select('id,name_en').ilike('name_en', `%${term}%`).limit(1);
+                    const ex = (matches ?? [])[0];
+                    if (!ex)
+                        return { content: [{ type: 'text', text: `No exercise matching "${term}".` }] };
+                    const { data: rows } = await supabase
+                        .from('workout_set_log')
+                        .select('weight_kg,reps,session_id,completed_at')
+                        .eq('user_id', userId)
+                        .eq('exercise_id', ex.id)
+                        .order('completed_at', { ascending: false })
+                        .limit(300);
+                    const all = (rows ?? []);
+                    // Group by session, summarize top set per session
+                    const bySession = new Map();
+                    for (const r of all) {
+                        if (!bySession.has(r.session_id))
+                            bySession.set(r.session_id, []);
+                        bySession.get(r.session_id).push(r);
+                    }
+                    const limit = a.limit ?? 10;
+                    const sessions = Array.from(bySession.values())
+                        .map((ss) => {
+                        const top = ss.reduce((b, s) => (Number(s.weight_kg) > Number(b.weight_kg) ? s : b), ss[0]);
+                        const e1rm = Number(top.weight_kg) * (1 + top.reps / 30);
+                        return { date: String(top.completed_at).slice(0, 10), top_weight_kg: Number(top.weight_kg), reps: top.reps, sets: ss.length, est_1rm_kg: Math.round(e1rm) };
+                    })
+                        .sort((x, y) => (x.date < y.date ? -1 : 1))
+                        .slice(-limit);
+                    return { content: [{ type: 'text', text: JSON.stringify({ exercise: ex.name_en, sessions }, null, 2) }] };
+                }
+                case 'get_volume_trend': {
+                    const weeks = a.weeks ?? 8;
+                    const since = new Date(Date.now() - weeks * 7 * 86400000).toISOString().slice(0, 10);
+                    const { data: rows } = await supabase
+                        .from('workout_set_log')
+                        .select('weight_kg,reps,completed_at')
+                        .eq('user_id', userId)
+                        .gte('completed_at', since);
+                    const all = (rows ?? []);
+                    const buckets = new Map();
+                    for (const r of all) {
+                        const d = new Date(r.completed_at);
+                        const day = (d.getUTCDay() + 6) % 7; // Monday=0
+                        const monday = new Date(d);
+                        monday.setUTCDate(d.getUTCDate() - day);
+                        const key = monday.toISOString().slice(0, 10);
+                        const b = buckets.get(key) ?? { volume: 0, sets: 0 };
+                        b.volume += Number(r.weight_kg) * r.reps;
+                        b.sets += 1;
+                        buckets.set(key, b);
+                    }
+                    const trend = Array.from(buckets.entries())
+                        .map(([week_starting, v]) => ({ week_starting, volume_kg: Math.round(v.volume), sets: v.sets }))
+                        .sort((x, y) => (x.week_starting < y.week_starting ? -1 : 1));
+                    return { content: [{ type: 'text', text: JSON.stringify({ weeks, trend }, null, 2) }] };
+                }
+                case 'get_personal_records': {
+                    const { data: rows } = await supabase
+                        .from('workout_set_log')
+                        .select('exercise_id,weight_kg,reps')
+                        .eq('user_id', userId);
+                    const all = (rows ?? []);
+                    if (all.length === 0)
+                        return { content: [{ type: 'text', text: 'No workout sets logged yet.' }] };
+                    const exIds = Array.from(new Set(all.map((r) => r.exercise_id)));
+                    const { data: exRows } = await supabase.from('exercises').select('id,name_en').in('id', exIds);
+                    const nameById = new Map((exRows ?? []).map((e) => [e.id, e.name_en]));
+                    const prs = exIds.map((id) => {
+                        const mine = all.filter((r) => r.exercise_id === id);
+                        const heaviest = mine.reduce((b, s) => (Number(s.weight_kg) > Number(b.weight_kg) ? s : b), mine[0]);
+                        const bestE1rm = mine.reduce((m, s) => Math.max(m, Number(s.weight_kg) * (1 + s.reps / 30)), 0);
+                        return {
+                            exercise: nameById.get(id) ?? 'Exercise',
+                            heaviest_kg: Number(heaviest.weight_kg),
+                            heaviest_reps: heaviest.reps,
+                            best_est_1rm_kg: Math.round(bestE1rm),
+                        };
+                    }).sort((x, y) => y.heaviest_kg - x.heaviest_kg);
+                    return { content: [{ type: 'text', text: JSON.stringify(prs, null, 2) }] };
                 }
                 default:
                     throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
