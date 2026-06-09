@@ -2,18 +2,20 @@
 
 import { useState } from 'react';
 import { useI18n } from '@/lib/i18n/context';
-import { Minus, Plus, Check } from 'lucide-react';
+import { ChevronUp, ChevronDown, Zap, Check } from 'lucide-react';
 import type { GuidedExercise } from './types';
 
 export function SetLogger({
   exercise,
   defaultWeight,
   defaultReps,
+  setIndex,
   onDone,
 }: {
   exercise: GuidedExercise;
   defaultWeight: number;
   defaultReps: number;
+  setIndex: number;
   onDone: (weight: number, reps: number, wasFailure: boolean) => void;
 }) {
   const { t } = useI18n();
@@ -22,88 +24,131 @@ export function SetLogger({
   const [failure, setFailure] = useState(false);
   const timed = exercise.isTimed;
 
-  const adjW = (d: number) => setWeight((w) => Math.max(0, Math.round((w + d) * 2) / 2));
+  const adjW = (d: number) =>
+    setWeight((w) => Math.max(0, parseFloat((w + d).toFixed(1))));
   const adjR = (d: number) => setReps((r) => Math.max(0, r + d));
 
-  const repsLabel = timed ? t('gw.seconds') : t('gw.reps');
-
   return (
-    <div className="space-y-3">
-      {/* Weight (hidden for pure bodyweight timed holds) */}
-      {!timed && (
-        <Stepper
-          label={t('gw.weight')}
-          unit={t('unit.kg')}
-          value={weight}
-          display={weight % 1 === 0 ? String(weight) : weight.toFixed(1)}
-          onMinus={() => adjW(-2.5)}
-          onPlus={() => adjW(2.5)}
-          minusLabel="-2.5"
-          plusLabel="+2.5"
-          accent="#22c55e"
+    <div className="px-4 pt-3 pb-[max(16px,env(safe-area-inset-bottom))]">
+
+      {/* Set progress dots */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+          {t('gw.setOf', { a: setIndex + 1, b: exercise.targetSets })}
+        </span>
+        <div className="flex items-center gap-1.5">
+          {Array.from({ length: exercise.targetSets }).map((_, i) => (
+            <div
+              key={i}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                i < setIndex
+                  ? 'w-2 bg-primary'
+                  : i === setIndex
+                  ? 'w-5 bg-primary'
+                  : 'w-2 bg-muted'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Drum steppers — side by side, or full-width for timed */}
+      <div className={`grid gap-3 mb-3 ${timed ? 'grid-cols-1 max-w-[180px] mx-auto' : 'grid-cols-2'}`}>
+        {!timed && (
+          <Drum
+            display={weight % 1 === 0 ? String(weight) : weight.toFixed(1)}
+            unit={t('unit.kg')}
+            accent="#22c55e"
+            onUp={() => adjW(2.5)}
+            onDown={() => adjW(-2.5)}
+          />
+        )}
+        <Drum
+          display={String(reps)}
+          unit={timed ? t('unit.sec') : t('gw.reps')}
+          accent="#3b82f6"
+          onUp={() => adjR(timed ? 5 : 1)}
+          onDown={() => adjR(timed ? -5 : -1)}
         />
+      </div>
+
+      {/* Weight quick-adjust pills */}
+      {!timed && (
+        <div className="flex gap-1.5 mb-3">
+          {[-5, -2.5, 2.5, 5].map((d) => (
+            <button
+              key={d}
+              onClick={() => adjW(d)}
+              className="flex-1 py-2 rounded-xl bg-card border border-border/70 text-[11px] font-bold text-muted-foreground active:scale-95 active:bg-muted transition-all"
+            >
+              {d > 0 ? `+${d}` : `${d}`}
+            </button>
+          ))}
+        </div>
       )}
 
-      <Stepper
-        label={repsLabel}
-        unit={timed ? t('unit.sec') : ''}
-        value={reps}
-        display={String(reps)}
-        onMinus={() => adjR(timed ? -5 : -1)}
-        onPlus={() => adjR(timed ? 5 : 1)}
-        minusLabel={timed ? '-5' : '-1'}
-        plusLabel={timed ? '+5' : '+1'}
-        accent="#3b82f6"
-      />
-
+      {/* Failure toggle — subtle by default, glows rose when active */}
       <button
         onClick={() => setFailure((f) => !f)}
-        className={`w-full py-2.5 rounded-xl text-xs font-bold border transition-colors ${
-          failure ? 'bg-rose-500/15 border-rose-500/40 text-rose-400' : 'bg-card border-border text-muted-foreground'
+        className={`w-full py-2.5 mb-3 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all duration-200 border ${
+          failure
+            ? 'bg-rose-500/15 border-rose-400/50 text-rose-400'
+            : 'bg-transparent border-border/25 text-muted-foreground/40'
         }`}
       >
+        <Zap
+          size={14}
+          className={failure ? 'fill-rose-400 text-rose-400' : 'text-muted-foreground/25'}
+        />
         {failure ? t('gw.failureOn') : t('gw.failureOff')}
       </button>
 
+      {/* DONE SET — hero action */}
       <button
         onClick={() => onDone(timed ? 0 : weight, reps, failure)}
-        className="w-full py-5 rounded-2xl font-black text-base bg-gradient-to-br from-[#22c55e] to-[#16a34a] text-black active:scale-[0.97] transition-transform flex items-center justify-center gap-2 shadow-[0_0_24px_rgba(34,197,94,0.4)]"
+        className="w-full py-[18px] rounded-3xl font-black text-lg bg-gradient-to-br from-[#22c55e] to-[#16a34a] text-black active:scale-[0.97] transition-transform flex items-center justify-center gap-2.5 shadow-[0_6px_32px_rgba(34,197,94,0.4)]"
       >
-        <Check size={22} strokeWidth={3} /> {t('gw.doneSet')}
+        <Check size={24} strokeWidth={3.5} />
+        {t('gw.doneSet')}
       </button>
     </div>
   );
 }
 
-function Stepper({
-  label, unit, display, onMinus, onPlus, minusLabel, plusLabel, accent,
+function Drum({
+  display, unit, accent, onUp, onDown,
 }: {
-  label: string; unit: string; value: number; display: string;
-  onMinus: () => void; onPlus: () => void; minusLabel: string; plusLabel: string; accent: string;
+  display: string; unit: string; accent: string;
+  onUp: () => void; onDown: () => void;
 }) {
   return (
-    <div className="bg-card border border-border rounded-2xl p-3">
-      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground text-center mb-1">{label}</p>
-      <div className="flex items-center justify-between gap-2">
-        <button
-          onClick={onMinus}
-          className="w-14 h-14 rounded-2xl bg-muted flex flex-col items-center justify-center active:scale-90 transition-transform shrink-0"
+    <div className="rounded-3xl overflow-hidden bg-card border border-border">
+      <button
+        onClick={onUp}
+        className="w-full h-12 flex items-center justify-center active:bg-muted/60 transition-colors select-none"
+      >
+        <ChevronUp size={24} className="text-muted-foreground" strokeWidth={2.5} />
+      </button>
+      <div
+        className="py-2.5 text-center border-y border-border/40"
+        style={{ background: `color-mix(in srgb, ${accent} 8%, transparent)` }}
+      >
+        <span
+          className="text-[54px] font-black tabular-nums leading-none select-none"
+          style={{ color: accent }}
         >
-          <Minus size={18} />
-          <span className="text-[9px] font-bold text-muted-foreground">{minusLabel}</span>
-        </button>
-        <div className="flex-1 text-center">
-          <span className="text-[44px] font-black tabular-nums leading-none" style={{ color: accent }}>{display}</span>
-          {unit && <span className="text-base font-bold text-muted-foreground ms-1">{unit}</span>}
-        </div>
-        <button
-          onClick={onPlus}
-          className="w-14 h-14 rounded-2xl bg-muted flex flex-col items-center justify-center active:scale-90 transition-transform shrink-0"
-        >
-          <Plus size={18} />
-          <span className="text-[9px] font-bold text-muted-foreground">{plusLabel}</span>
-        </button>
+          {display}
+        </span>
+        <span className="block text-[11px] font-bold text-muted-foreground mt-1 uppercase tracking-wider">
+          {unit}
+        </span>
       </div>
+      <button
+        onClick={onDown}
+        className="w-full h-12 flex items-center justify-center active:bg-muted/60 transition-colors select-none"
+      >
+        <ChevronDown size={24} className="text-muted-foreground" strokeWidth={2.5} />
+      </button>
     </div>
   );
 }

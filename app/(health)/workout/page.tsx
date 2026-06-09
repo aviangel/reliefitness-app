@@ -8,7 +8,7 @@ import { getT, getLang } from '@/lib/i18n/server';
 import type { TranslationKey } from '@/lib/i18n/translations';
 import { format, parseISO } from 'date-fns';
 import { he as heLocale } from 'date-fns/locale';
-import { Dumbbell, Flame, Clock } from 'lucide-react';
+import { Flame, Clock } from 'lucide-react';
 
 export const revalidate = 0;
 
@@ -120,21 +120,15 @@ export default async function WorkoutPage() {
 
   return (
     <ScrollShell>
-      <div className="px-4 py-5 border-b border-border">
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <Dumbbell size={22} className="text-primary" />
-          {t('wk.title')}
-        </h1>
-        <p className="text-sm text-muted-foreground">{format(new Date(), 'EEEE, d MMMM', { locale: dateLocale })}</p>
-      </div>
-
-      <div className="p-4 space-y-5">
-        {/* Guided workout entry point */}
+      {/* ── Hero: guided plan (no separate header — plan IS the header) ── */}
+      <div className="p-4 pb-2">
         {overviewTemplates.length > 0 && (
           <WorkoutOverview templates={overviewTemplates} recommendedOrder={recommendedOrder} />
         )}
+      </div>
 
-        {/* Today summary */}
+      <div className="px-4 pb-5 space-y-5">
+        {/* Compact stats row */}
         <div className="grid grid-cols-2 gap-3">
           <div className="glass-card rounded-2xl p-4 text-center">
             <div className="flex items-center justify-center gap-1.5 mb-1">
@@ -154,7 +148,7 @@ export default async function WorkoutPage() {
           </div>
         </div>
 
-        {/* Log form */}
+        {/* Manual log */}
         <div className="glass-card rounded-3xl overflow-hidden">
           <div className="px-4 pt-4 pb-2">
             <h2 className="font-semibold">
@@ -174,16 +168,16 @@ export default async function WorkoutPage() {
                   key={entry.id}
                   className="glass-card rounded-2xl flex items-center gap-3 px-4 py-3.5"
                 >
-                  <span className="text-2xl shrink-0">
-                    {TYPE_EMOJI[entry.type] ?? '💪'}
-                  </span>
+                  <span className="text-2xl shrink-0">{TYPE_EMOJI[entry.type] ?? '💪'}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2">
                       <p className="text-sm font-semibold">
                         {TYPE_EMOJI[entry.type] ? t(`workout.${entry.type}` as TranslationKey) : entry.type}
                       </p>
                       {entry.duration_minutes != null && (
-                        <span className="text-xs font-bold text-primary">{entry.duration_minutes} {t('unit.min')}</span>
+                        <span className="text-xs font-bold text-primary">
+                          {entry.duration_minutes} {t('unit.min')}
+                        </span>
                       )}
                       {entry.date === today && (
                         <span className="text-[10px] bg-primary/20 text-primary rounded-full px-2 py-0.5 font-medium">
@@ -192,7 +186,9 @@ export default async function WorkoutPage() {
                       )}
                     </div>
                     {entry.calories_burned != null && (
-                      <span className="text-xs text-orange-400">{t('wk.caloriesBurned', { n: entry.calories_burned })}</span>
+                      <span className="text-xs text-orange-400">
+                        {t('wk.caloriesBurned', { n: entry.calories_burned })}
+                      </span>
                     )}
                     {entry.notes && (
                       <p className="text-xs text-muted-foreground mt-0.5 truncate">{entry.notes}</p>

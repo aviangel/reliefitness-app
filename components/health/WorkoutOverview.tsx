@@ -29,61 +29,93 @@ export function WorkoutOverview({
 
   return (
     <div className="space-y-4">
-      {/* Recommended / today's workout */}
-      <div className="rounded-3xl overflow-hidden border border-primary/30 bg-gradient-to-br from-primary/15 to-rose-500/10">
-        <div className="px-5 pt-5">
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{t('gw.todaysPlan')}</span>
-          <h2 className="text-2xl font-black mt-1.5">{recommended.dayName}</h2>
-          {recommended.phase && <p className="text-xs font-semibold text-muted-foreground mt-0.5">{recommended.phase}</p>}
-          {recommended.coachNote && <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{recommended.coachNote}</p>}
 
-          <div className="flex flex-wrap gap-1.5 mt-3">
+      {/* ── HERO: today's recommended workout ── */}
+      <div
+        className="rounded-[28px] overflow-hidden border border-primary/20"
+        style={{
+          background:
+            'radial-gradient(ellipse 140% 70% at 5% 5%, rgba(34,197,94,0.22), transparent 55%), hsl(var(--card))',
+        }}
+      >
+        <div className="px-5 pt-5 pb-4">
+          <span className="inline-block text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-2">
+            {t('gw.todaysPlan')}
+          </span>
+          <h2 className="text-3xl font-black leading-tight">{recommended.dayName}</h2>
+          {recommended.phase && (
+            <p className="text-xs font-semibold text-muted-foreground mt-0.5">{recommended.phase}</p>
+          )}
+          {recommended.coachNote && (
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{recommended.coachNote}</p>
+          )}
+
+          {/* Exercise list with weights */}
+          <div className="mt-3 space-y-1.5">
             {recommended.exercises.slice(0, 6).map((e, i) => (
-              <span key={i} className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-card/60 text-muted-foreground">
-                {exName(e)}{e.weightKg != null ? ` · ${e.weightKg}kg` : ''}
-              </span>
+              <div key={i} className="flex items-center gap-2 text-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" />
+                <span className="font-medium text-foreground/80">{exName(e)}</span>
+                {e.weightKg != null && (
+                  <span className="text-xs font-bold text-primary ms-auto">{e.weightKg}kg</span>
+                )}
+              </div>
             ))}
             {recommended.exercises.length > 6 && (
-              <span className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-card/60 text-muted-foreground">
-                +{recommended.exercises.length - 6}
-              </span>
+              <p className="text-xs text-muted-foreground ps-3.5">
+                +{recommended.exercises.length - 6} {t('gw.moreExercises')}
+              </p>
             )}
           </div>
         </div>
 
-        <form action={startSession.bind(null, recommended.id)} className="p-5 pt-4">
-          <button
-            type="submit"
-            className="w-full py-5 rounded-2xl font-black text-base bg-gradient-to-br from-[#22c55e] to-[#16a34a] text-black active:scale-[0.97] transition-transform flex items-center justify-center gap-2 shadow-[0_0_24px_rgba(34,197,94,0.4)]"
-          >
-            <Play size={22} strokeWidth={3} fill="currentColor" /> {t('gw.startWorkout')}
-          </button>
-        </form>
-      </div>
-
-      {/* Other days */}
-      <div>
-        <h3 className="text-sm font-bold text-muted-foreground mb-2 px-1">{t('gw.otherDays')}</h3>
-        <div className="space-y-2">
-          {others.map((tpl) => (
-            <form key={tpl.id} action={startSession.bind(null, tpl.id)}>
-              <button
-                type="submit"
-                className="w-full glass-card rounded-2xl flex items-center gap-3 px-4 py-3.5 active:scale-[0.98] transition-transform text-start"
-              >
-                <span className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                  <Dumbbell size={18} className="text-rose-400" />
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold">{tpl.dayName}</p>
-                  <p className="text-xs text-muted-foreground">{t('gw.exerciseCount', { n: tpl.exercises.length })}</p>
-                </div>
-                <ChevronRight size={18} className="text-muted-foreground shrink-0" />
-              </button>
-            </form>
-          ))}
+        <div className="px-5 pb-5">
+          <form action={startSession.bind(null, recommended.id)}>
+            <button
+              type="submit"
+              className="w-full py-5 rounded-2xl font-black text-base bg-gradient-to-br from-[#22c55e] to-[#16a34a] text-black active:scale-[0.97] transition-transform flex items-center justify-center gap-2.5 shadow-[0_6px_28px_rgba(34,197,94,0.5)]"
+            >
+              <Play size={22} strokeWidth={3} fill="currentColor" />
+              {t('gw.startWorkout')}
+            </button>
+          </form>
         </div>
       </div>
+
+      {/* ── OTHER DAYS: horizontal scroll strip ── */}
+      {others.length > 0 && (
+        <div>
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 px-0.5">
+            {t('gw.otherDays')}
+          </p>
+          <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-0.5 px-0.5 scrollbar-none snap-x snap-mandatory">
+            {others.map((tpl) => (
+              <form
+                key={tpl.id}
+                action={startSession.bind(null, tpl.id)}
+                className="shrink-0 snap-start"
+              >
+                <button
+                  type="submit"
+                  className="w-[148px] glass-card rounded-2xl p-3.5 text-start active:scale-[0.97] transition-transform border border-border/60 hover:border-primary/30"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center mb-2">
+                    <Dumbbell size={16} className="text-rose-400" />
+                  </div>
+                  <p className="text-sm font-black leading-tight mb-0.5">{tpl.dayName}</p>
+                  {tpl.phase && (
+                    <p className="text-[10px] text-muted-foreground mb-1">{tpl.phase}</p>
+                  )}
+                  <p className="text-[10px] text-muted-foreground">
+                    {t('gw.exerciseCount', { n: tpl.exercises.length })}
+                  </p>
+                  <ChevronRight size={14} className="text-muted-foreground/50 mt-1.5" />
+                </button>
+              </form>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -14,21 +14,23 @@ function beep() {
     gain.connect(ctx.destination);
     osc.frequency.value = 880;
     gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.35);
+    gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
     osc.start();
-    osc.stop(ctx.currentTime + 0.36);
+    osc.stop(ctx.currentTime + 0.41);
   } catch { /* audio not allowed */ }
 }
 
 export function RestTimer({
   seconds,
   nextLabel,
+  nextWeight,
   onDone,
   soundOn = true,
 }: {
   seconds: number;
   nextLabel: string;
+  nextWeight?: number | null;
   onDone: () => void;
   soundOn?: boolean;
 }) {
@@ -53,7 +55,7 @@ export function RestTimer({
         }
         if (r === 11 && !warnedRef.current) {
           warnedRef.current = true;
-          navigator.vibrate?.(60); // "10 seconds left" cue
+          navigator.vibrate?.(60);
         }
         return r - 1;
       });
@@ -63,38 +65,58 @@ export function RestTimer({
   }, []);
 
   const pct = total > 0 ? remaining / total : 0;
-  const R = 130;
+  const R = 116;
   const circ = 2 * Math.PI * R;
   const mm = Math.floor(remaining / 60);
   const ss = remaining % 60;
 
   return (
-    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-6"
-      style={{ background: 'radial-gradient(120% 90% at 50% 20%, rgba(244,63,94,0.18), transparent 60%), hsl(var(--background))' }}>
-      <p className="text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground mb-8">{t('gw.restTitle')}</p>
+    <div
+      className="absolute inset-0 z-20 flex flex-col items-center justify-between px-5 py-8"
+      style={{
+        background:
+          'radial-gradient(ellipse 140% 60% at 50% 10%, rgba(244,63,94,0.2), transparent 55%), hsl(var(--background))',
+      }}
+    >
+      {/* Label */}
+      <p className="text-[11px] font-black uppercase tracking-[0.25em] text-rose-400 mt-2">
+        {t('gw.restTitle')}
+      </p>
 
-      <div className="relative" style={{ width: 300, height: 300 }}>
-        <svg width="300" height="300" className="-rotate-90">
-          <circle cx="150" cy="150" r={R} fill="none" stroke="hsl(var(--muted))" strokeWidth="14" opacity="0.35" />
+      {/* Circle countdown */}
+      <div className="relative" style={{ width: 272, height: 272 }}>
+        <svg width="272" height="272" className="-rotate-90">
+          <circle cx="136" cy="136" r={R} fill="none" stroke="hsl(var(--muted))" strokeWidth="12" opacity="0.3" />
           <circle
-            cx="150" cy="150" r={R} fill="none" stroke="#f43f5e" strokeWidth="14" strokeLinecap="round"
-            strokeDasharray={circ} strokeDashoffset={circ * (1 - pct)}
-            style={{ transition: 'stroke-dashoffset 1s linear' }}
+            cx="136" cy="136" r={R} fill="none"
+            stroke={remaining <= 10 ? '#f97316' : '#f43f5e'}
+            strokeWidth="12" strokeLinecap="round"
+            strokeDasharray={circ}
+            strokeDashoffset={circ * (1 - pct)}
+            style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.3s' }}
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-[72px] font-black tabular-nums leading-none">
+          <span className="text-[68px] font-black tabular-nums leading-none">
             {mm > 0 ? `${mm}:${String(ss).padStart(2, '0')}` : ss}
           </span>
-          <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-1">{t('gw.rest')}</span>
+          <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mt-1">
+            {t('gw.rest')}
+          </span>
         </div>
       </div>
 
-      <p className="mt-8 text-center text-muted-foreground text-sm">
-        {t('gw.nextUp')} <span className="font-bold text-foreground">{nextLabel}</span>
-      </p>
+      {/* Next up */}
+      <div className="text-center">
+        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">{t('gw.nextUp')}</p>
+        <p className="text-base font-black">{nextLabel}</p>
+        {nextWeight != null && (
+          <p className="text-sm font-bold text-primary mt-0.5">{nextWeight} kg</p>
+        )}
+      </div>
 
-      <div className="flex gap-3 mt-8 w-full max-w-sm">
+      {/* Controls */}
+      <div className="flex gap-3 w-full max-w-sm">
         <button
           onClick={() => { setRemaining((r) => r + 30); setTotal((tt) => tt + 30); }}
           className="flex-1 py-4 rounded-2xl font-bold text-sm bg-card border border-border active:scale-95 transition-transform flex items-center justify-center gap-1.5"
@@ -103,7 +125,7 @@ export function RestTimer({
         </button>
         <button
           onClick={() => { if (!doneRef.current) { doneRef.current = true; onDone(); } }}
-          className="flex-1 py-4 rounded-2xl font-bold text-sm bg-rose-500 text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5"
+          className="flex-[1.4] py-4 rounded-2xl font-black text-sm bg-rose-500 text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5 shadow-[0_4px_20px_rgba(244,63,94,0.4)]"
         >
           <SkipForward size={16} /> {t('gw.skipRest')}
         </button>
