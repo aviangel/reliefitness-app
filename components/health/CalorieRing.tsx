@@ -5,6 +5,7 @@ import { useI18n } from '@/lib/i18n/context';
 interface CalorieRingProps {
   calories: number;
   goal: number;
+  tdee?: number;
   size?: number;
 }
 
@@ -33,9 +34,12 @@ function toHsl([h, s, l]: [number, number, number], lightnessOffset = 0) {
   return `hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l + lightnessOffset)}%)`;
 }
 
-export function CalorieRing({ calories, goal, size = 188 }: CalorieRingProps) {
+export function CalorieRing({ calories, goal, tdee, size = 188 }: CalorieRingProps) {
   const { t } = useI18n();
   const pct = goal > 0 ? calories / goal : 0;
+  // Color is keyed to TDEE (metabolic maintenance), not the user goal.
+  // If tdee isn't available yet fall back to goal so the logic stays sensible.
+  const colorPct = (tdee ?? goal) > 0 ? calories / (tdee ?? goal) : 0;
   const stroke = 14;
   const radius = (size - stroke * 2) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -43,7 +47,7 @@ export function CalorieRing({ calories, goal, size = 188 }: CalorieRingProps) {
   const remaining = Math.round(goal - calories);
   const overGoal = calories > goal;
 
-  const hsl = ringHsl(pct);
+  const hsl = ringHsl(colorPct);
   const colorPrimary = toHsl(hsl);
   const colorLight = toHsl(hsl, 12); // slightly lighter for gradient start
 

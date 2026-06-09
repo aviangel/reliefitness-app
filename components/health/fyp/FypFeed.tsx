@@ -18,6 +18,7 @@ export interface FypData {
   calories: number;
   caloriesBurned: number;
   calorieGoal: number;
+  tdee: number;
   protein: number; proteinGoal: number;
   carbs: number; carbsGoal: number;
   fat: number; fatGoal: number;
@@ -205,7 +206,7 @@ export function FypFeed(d: FypData) {
 
           <div className="flex-1 flex items-center justify-center">
             <div className="fyp-enter scale-[1.18]">
-              <CalorieRing calories={d.calories} goal={d.calorieGoal} size={188} />
+              <CalorieRing calories={d.calories} goal={d.calorieGoal} tdee={d.tdee} size={188} />
             </div>
           </div>
 

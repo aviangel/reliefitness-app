@@ -7,6 +7,7 @@ import type { MealLogEntry } from '@/types/health';
 import { format } from 'date-fns';
 import { he as heLocale } from 'date-fns/locale';
 import { FypFeed, type FypData } from '@/components/health/fyp/FypFeed';
+import { computeTdee } from '@/lib/health/tdee';
 
 export const revalidate = 0;
 
@@ -86,12 +87,25 @@ export default async function DashboardPage() {
   const totalBurned = workouts.reduce((s, w) => s + (w.calories_burned ?? 0), 0);
   const waterGoalMl = Number((p as { water_goal_ml?: number }).water_goal_ml ?? 2500);
 
+  const profileWithTdee = p as {
+    sex?: string; activity_level?: string;
+    height_cm: number; birth_year: number; water_goal_ml?: number;
+  };
+  const tdee = computeTdee({
+    weightKg: Number(currentWeight),
+    heightCm: Number(profileWithTdee.height_cm),
+    birthYear: Number(profileWithTdee.birth_year ?? 2000),
+    sex: profileWithTdee.sex ?? 'male',
+    activityLevel: profileWithTdee.activity_level ?? 'lightly_active',
+  });
+
   const data: FypData = {
     name: p.name,
     dateLabel: format(new Date(), 'EEEE, d MMM', { locale: dateLocale }),
     calories: totalCalories,
     caloriesBurned: totalBurned,
     calorieGoal: Number(p.calorie_goal),
+    tdee,
     protein: totalProtein, proteinGoal: Number(p.protein_goal_g),
     carbs: totalCarbs, carbsGoal: Number(p.carbs_goal_g),
     fat: totalFat, fatGoal: Number(p.fat_goal_g),
