@@ -9,6 +9,7 @@ import { MEAL_TYPES } from '@/lib/health/constants';
 import type { TranslationKey } from '@/lib/i18n/translations';
 import {
   ChevronUp, Plus, Droplets, Scale, Dumbbell, Flame, Check, BarChart2, Settings,
+  Moon, Footprints, Ruler, AlertTriangle, ChevronRight,
 } from 'lucide-react';
 
 export interface FypData {
@@ -29,7 +30,7 @@ export interface FypData {
 type Grad = { dark: string; light: string };
 const grad = (dark: string, light: string): Grad => ({ dark, light });
 
-const PANELS = 6;
+const PANELS = 7;
 // Transition duration in ms — controls swipe speed feel
 const TRANSITION_MS = 320;
 
@@ -102,6 +103,10 @@ export function FypFeed(d: FypData) {
   const gWorkout = grad(
     `radial-gradient(120% 80% at 50% 8%, rgba(244,63,94,0.30), rgba(236,72,153,0.10) 40%, transparent 60%), ${base}`,
     `radial-gradient(120% 80% at 50% 8%, rgba(244,63,94,0.24), rgba(236,72,153,0.10) 40%, transparent 60%), ${base}`,
+  );
+  const gMore = grad(
+    `radial-gradient(120% 80% at 50% 8%, rgba(99,102,241,0.28), rgba(20,184,166,0.10) 40%, transparent 60%), ${base}`,
+    `radial-gradient(120% 80% at 50% 8%, rgba(99,102,241,0.22), rgba(20,184,166,0.10) 40%, transparent 60%), ${base}`,
   );
 
   const muted = isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)';
@@ -326,6 +331,18 @@ export function FypFeed(d: FypData) {
           </Link>
         </Panel>
 
+        {/* ── 7 · MORE TRACKERS ── */}
+        <Panel bg={pick(gMore)}>
+          <PoolLabel muted={muted}>{t('more.title')}</PoolLabel>
+          <div className="flex-1 flex flex-col justify-center gap-2.5">
+            <TrackerLink href="/sleep" icon={<Moon size={20} className="text-indigo-400" />} label={t('sleep.title')} muted={muted} track={track} />
+            <TrackerLink href="/steps" icon={<Footprints size={20} className="text-lime-500" />} label={t('steps.title')} muted={muted} track={track} />
+            <TrackerLink href="/measurements" icon={<Ruler size={20} className="text-teal-400" />} label={t('meas.title')} muted={muted} track={track} />
+            <TrackerLink href="/slips" icon={<AlertTriangle size={20} className="text-rose-400" />} label={t('slips.title')} muted={muted} track={track} />
+            <TrackerLink href="/stats" icon={<BarChart2 size={20} className="text-primary" />} label={t('stats.title')} muted={muted} track={track} />
+          </div>
+        </Panel>
+
       </div>
     </div>
   );
@@ -356,6 +373,26 @@ function IconLink({ href, children, muted }: { href: string; children: React.Rea
   return (
     <Link href={href} className="w-9 h-9 flex items-center justify-center rounded-xl active:scale-90 transition-transform" style={{ color: muted }}>
       {children}
+    </Link>
+  );
+}
+
+function TrackerLink({
+  href, icon, label, muted, track,
+}: {
+  href: string; icon: React.ReactNode; label: string; muted: string; track: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-3 px-4 py-3.5 rounded-[18px] border active:scale-[0.98] transition-transform"
+      style={{ background: 'hsl(var(--surface))', borderColor: 'hsl(var(--border))' }}
+    >
+      <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: track }}>
+        {icon}
+      </span>
+      <span className="flex-1 text-sm font-black">{label}</span>
+      <ChevronRight size={18} style={{ color: muted }} />
     </Link>
   );
 }
