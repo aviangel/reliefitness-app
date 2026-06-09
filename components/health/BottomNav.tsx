@@ -12,6 +12,7 @@ const LEFT_ITEMS: { href: string; labelKey: TranslationKey; icon: typeof Home }[
 ];
 
 const RIGHT_ITEMS: { href: string; labelKey: TranslationKey; icon: typeof Home }[] = [
+  { href: '/workout', labelKey: 'nav.workout', icon: Dumbbell },
   { href: '/drinks', labelKey: 'nav.drinks', icon: Droplets },
   { href: '/weight', labelKey: 'nav.weight', icon: Scale },
 ];
@@ -35,7 +36,7 @@ export function BottomNav() {
               <Link
                 key={href}
                 href={href}
-                className={`flex flex-col items-center gap-0.5 px-4 py-1.5 min-w-[52px] min-h-[44px] justify-center transition-all duration-150 active:scale-95 ${
+                className={`flex flex-col items-center gap-0.5 px-2.5 py-1.5 min-w-[44px] min-h-[44px] justify-center transition-all duration-150 active:scale-95 ${
                   active ? 'text-primary' : 'text-muted-foreground/50'
                 }`}
               >
@@ -66,7 +67,7 @@ export function BottomNav() {
               <Link
                 key={href}
                 href={href}
-                className={`flex flex-col items-center gap-0.5 px-4 py-1.5 min-w-[52px] min-h-[44px] justify-center transition-all duration-150 active:scale-95 ${
+                className={`flex flex-col items-center gap-0.5 px-2.5 py-1.5 min-w-[44px] min-h-[44px] justify-center transition-all duration-150 active:scale-95 ${
                   active ? 'text-primary' : 'text-muted-foreground/50'
                 }`}
               >

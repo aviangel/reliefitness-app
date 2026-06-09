@@ -17,6 +17,7 @@ type ExerciseRow = {
 type TemplateExerciseRow = {
   id: string; exercise_id: string; order_index: number; target_sets: number;
   target_reps_min: number; target_reps_max: number | null; rest_seconds: number;
+  target_weight_kg: number | null; progression_note: string | null;
   warning_text: string | null; exercise: ExerciseRow;
 };
 type SetRow = { exercise_id: string; set_number: number; weight_kg: number; reps: number; session_id: string; completed_at: string };
@@ -43,7 +44,7 @@ export default async function GuidedSessionPage({ params }: { params: { sessionI
     supabase.from('workout_templates').select('day_name,phase').eq('id', templateId).single(),
     supabase
       .from('workout_template_exercises')
-      .select('id,exercise_id,order_index,target_sets,target_reps_min,target_reps_max,rest_seconds,warning_text,exercise:exercises(id,slug,name_en,name_he,exercise_type,muscle_groups,is_timed,instructions_text,demo_gif_url,hernia_warning)')
+      .select('id,exercise_id,order_index,target_sets,target_reps_min,target_reps_max,rest_seconds,target_weight_kg,progression_note,warning_text,exercise:exercises(id,slug,name_en,name_he,exercise_type,muscle_groups,is_timed,instructions_text,demo_gif_url,hernia_warning)')
       .eq('template_id', templateId)
       .order('order_index'),
   ]);
@@ -76,25 +77,30 @@ export default async function GuidedSessionPage({ params }: { params: { sessionI
     const lastSets = lastSetsByEx.get(row.exercise_id) ?? [];
     const isTimed = e.is_timed;
 
+    // Predetermined plan weight (the coach's target) wins when present.
+    const targetWeight = row.target_weight_kg != null ? Number(row.target_weight_kg) : null;
+
     // Heaviest set from last session (for "last time" + progression baseline)
     let lastSummary: string | null = null;
     let suggestedWeight: number | null = null;
-    let defaultWeight = 0;
-    let defaultReps = row.target_reps_max ?? (row.target_reps_min > 0 ? row.target_reps_min : (isTimed ? 30 : 10));
+    // Default to the plan's target reps (so reps are predetermined too).
+    let defaultReps = row.target_reps_min > 0 ? row.target_reps_min : (row.target_reps_max ?? (isTimed ? 30 : 10));
+    // Default weight: plan target first, else 0 until we see history below.
+    let defaultWeight = !isTimed && targetWeight != null ? targetWeight : 0;
 
     if (lastSets.length > 0) {
       const heaviest = lastSets.reduce((best, s) => (Number(s.weight_kg) > Number(best.weight_kg) ? s : best), lastSets[0]);
       const lastW = Number(heaviest.weight_kg);
       const lastR = heaviest.reps;
       lastSummary = isTimed ? `${lastR}${t('unit.sec')}` : `${lastW}${t('unit.kg')} × ${lastR}`;
-      defaultReps = lastR;
 
       if (!isTimed && lastW > 0) {
         const top = row.target_reps_max ?? row.target_reps_min;
         const hitTop = row.target_reps_min > 0 && top > 0 && lastSets.every((s) => s.reps >= top);
+        // History-based suggestion only matters when the coach hasn't pinned a weight.
         suggestedWeight = hitTop ? lastW + INCREMENT_KG : lastW;
-        defaultWeight = suggestedWeight;
-      } else if (!isTimed) {
+        if (targetWeight == null) defaultWeight = suggestedWeight;
+      } else if (!isTimed && targetWeight == null) {
         defaultWeight = lastW;
       }
     }
@@ -116,6 +122,8 @@ export default async function GuidedSessionPage({ params }: { params: { sessionI
       repsMin: row.target_reps_min,
       repsMax: row.target_reps_max,
       restSeconds: row.rest_seconds,
+      targetWeight,
+      progressionNote: row.progression_note,
       lastSummary,
       suggestedWeight,
       defaultReps,

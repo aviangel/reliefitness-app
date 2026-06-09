@@ -319,6 +319,114 @@ export function createMcpServer(supabase, userId) {
                 description: 'All-time personal records per exercise: heaviest weight and best estimated 1-rep max.',
                 inputSchema: { type: 'object', properties: {}, required: [] },
             },
+            // ─────────────────────────────────────────────────────────────────────
+            // COACH TOOLS — full control over the user's workout plan.
+            // The plan is what the app pre-fills (predetermined weight + reps) and
+            // what guided mode executes. Build it with save_workout_day, inspect it
+            // with get_workout_plan, and progress it with update_exercise_target.
+            // ─────────────────────────────────────────────────────────────────────
+            {
+                name: 'get_exercise_catalog',
+                description: 'List every exercise available to put in a plan (slug, name, type, muscle groups, timed flag, hernia warning). Call this before save_workout_day so you use exact slugs. If an exercise you want is missing, create it with add_exercise.',
+                inputSchema: {
+                    type: 'object',
+                    properties: { search: { type: 'string', description: 'Optional name filter.' } },
+                    required: [],
+                },
+            },
+            {
+                name: 'add_exercise',
+                description: 'Add a new exercise to the catalog so it can be used in a plan. Research the movement first. Provide a demo_gif_url if you can find a directly-linkable image/gif.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        name_en: { type: 'string' },
+                        name_he: { type: 'string', description: 'Hebrew name if known.' },
+                        slug: { type: 'string', description: 'kebab-case unique id. Omit to auto-generate from name.' },
+                        exercise_type: { type: 'string', enum: ['compound', 'isolation'] },
+                        muscle_groups: { type: 'array', items: { type: 'string' }, description: 'e.g. ["chest","triceps"]' },
+                        default_rest_seconds: { type: 'number', description: 'Default 60.' },
+                        demo_gif_url: { type: 'string' },
+                        instructions_text: { type: 'string' },
+                        hernia_warning: { type: 'boolean', description: 'True if it stresses the abdominal wall (user has a hernia).' },
+                        is_timed: { type: 'boolean', description: 'True if reps actually mean seconds held (e.g. plank).' },
+                    },
+                    required: ['name_en', 'exercise_type', 'muscle_groups'],
+                },
+            },
+            {
+                name: 'get_workout_plan',
+                description: "Read the user's current workout plan day-by-day: every exercise with target sets, rep range, predetermined weight, rest, and your progression note. Also shows each lift's most recent performed top set so you can compare planned vs actual. If the user has no personal plan yet, returns the default system split flagged source:'system' — build a personal one with save_workout_day.",
+                inputSchema: { type: 'object', properties: {}, required: [] },
+            },
+            {
+                name: 'save_workout_day',
+                description: "Create or replace ONE day of the user's personal plan (idempotent on day_order). Pass the full ordered exercise list for that day — it fully replaces that day's exercises. This is the main tool for building a plan: call it once per training day. Marks the plan as the user's active coach plan, which the app uses instead of the default split.",
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        day_order: { type: 'number', description: 'Day position in the rotation (1,2,3,...). Reusing a number overwrites that day.' },
+                        day_name: { type: 'string', description: 'e.g. "Pull A", "Push", "Legs & Core".' },
+                        phase: { type: 'string', description: 'Optional focus tag, e.g. "Hypertrophy".' },
+                        coach_note: { type: 'string', description: 'Short guidance shown to the user for this day.' },
+                        auto_progress: { type: 'boolean', description: 'If true (default), the app auto-bumps target weight +2.5kg when the user hits the top of the rep range on every set.' },
+                        exercises: {
+                            type: 'array',
+                            description: 'Ordered list of exercises for this day.',
+                            items: {
+                                type: 'object',
+                                properties: {
+                                    exercise_slug: { type: 'string', description: 'Exact slug from get_exercise_catalog.' },
+                                    target_sets: { type: 'number', description: 'Default 3.' },
+                                    reps_min: { type: 'number', description: 'Bottom of rep range (or seconds if timed). Default 8.' },
+                                    reps_max: { type: 'number', description: 'Top of rep range. Omit for a fixed target.' },
+                                    target_weight_kg: { type: 'number', description: 'Predetermined working weight. Omit for bodyweight/timed moves.' },
+                                    rest_seconds: { type: 'number', description: 'Rest after each set. Default = exercise default.' },
+                                    progression_note: { type: 'string', description: 'e.g. "Add 2.5kg once you get 12 on all sets".' },
+                                    warning_text: { type: 'string', description: 'Form/safety cue shown prominently.' },
+                                },
+                                required: ['exercise_slug'],
+                            },
+                        },
+                    },
+                    required: ['day_order', 'day_name', 'exercises'],
+                },
+            },
+            {
+                name: 'update_exercise_target',
+                description: 'Adjust a single exercise in the plan without rebuilding the whole day — use this to progress (raise weight/reps) or tweak. Provide only the fields you want to change.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        day_order: { type: 'number', description: 'Which day the exercise is on.' },
+                        exercise_slug: { type: 'string' },
+                        target_weight_kg: { type: 'number' },
+                        reps_min: { type: 'number' },
+                        reps_max: { type: 'number' },
+                        target_sets: { type: 'number' },
+                        progression_note: { type: 'string' },
+                    },
+                    required: ['day_order', 'exercise_slug'],
+                },
+            },
+            {
+                name: 'delete_workout_day',
+                description: "Remove one day from the user's personal plan by day_order.",
+                inputSchema: {
+                    type: 'object',
+                    properties: { day_order: { type: 'number' } },
+                    required: ['day_order'],
+                },
+            },
+            {
+                name: 'get_workout_adherence',
+                description: 'Coaching report: how many guided sessions were actually completed each of the last N weeks vs the number of planned days, plus a per-exercise "ready to progress" check (did they hit the top of the rep range on every set last time?). Use this to decide whether to raise weights/reps.',
+                inputSchema: {
+                    type: 'object',
+                    properties: { weeks: { type: 'number', description: 'Weeks to look back (default 4).' } },
+                    required: [],
+                },
+            },
         ],
     }));
     server.setRequestHandler(CallToolRequestSchema, async (req) => {
@@ -811,6 +919,228 @@ export function createMcpServer(supabase, userId) {
                         };
                     }).sort((x, y) => y.heaviest_kg - x.heaviest_kg);
                     return { content: [{ type: 'text', text: JSON.stringify(prs, null, 2) }] };
+                }
+                case 'get_exercise_catalog': {
+                    let q = supabase.from('exercises').select('slug,name_en,name_he,exercise_type,muscle_groups,is_timed,hernia_warning,default_rest_seconds').order('name_en');
+                    if (a.search)
+                        q = q.ilike('name_en', `%${a.search}%`);
+                    const { data } = await q;
+                    return { content: [{ type: 'text', text: JSON.stringify(data ?? [], null, 2) }] };
+                }
+                case 'add_exercise': {
+                    const nameEn = String(a.name_en ?? '').trim();
+                    if (!nameEn)
+                        return { content: [{ type: 'text', text: 'name_en is required.' }], isError: true };
+                    const slug = a.slug?.trim() || nameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                    const { data: existing } = await supabase.from('exercises').select('slug').eq('slug', slug).maybeSingle();
+                    if (existing)
+                        return { content: [{ type: 'text', text: `Exercise "${slug}" already exists — use it directly in save_workout_day.` }] };
+                    const { error } = await supabase.from('exercises').insert({
+                        slug, name_en: nameEn, name_he: a.name_he ?? null,
+                        exercise_type: a.exercise_type, muscle_groups: a.muscle_groups ?? [],
+                        default_rest_seconds: a.default_rest_seconds ?? 60,
+                        demo_gif_url: a.demo_gif_url ?? null,
+                        instructions_text: a.instructions_text ?? null,
+                        hernia_warning: a.hernia_warning ?? false,
+                        is_timed: a.is_timed ?? false,
+                    });
+                    if (error)
+                        throw error;
+                    return { content: [{ type: 'text', text: `Added exercise "${nameEn}" (slug: ${slug}).` }] };
+                }
+                case 'get_workout_plan': {
+                    // Prefer the user's active coach plan; fall back to the system split.
+                    let { data: tpls } = await supabase
+                        .from('workout_templates')
+                        .select('id,day_order,day_name,phase,coach_note,source,auto_progress')
+                        .eq('user_id', userId).eq('is_active', true).order('day_order');
+                    let isPersonal = (tpls ?? []).length > 0;
+                    if (!isPersonal) {
+                        const sys = await supabase
+                            .from('workout_templates')
+                            .select('id,day_order,day_name,phase,coach_note,source,auto_progress')
+                            .is('user_id', null).order('day_order');
+                        tpls = sys.data ?? [];
+                    }
+                    const templates = (tpls ?? []);
+                    const tplIds = templates.map((t) => t.id);
+                    const { data: texRows } = await supabase
+                        .from('workout_template_exercises')
+                        .select('template_id,order_index,target_sets,target_reps_min,target_reps_max,target_weight_kg,rest_seconds,progression_note,warning_text,exercise:exercises(slug,name_en,is_timed)')
+                        .in('template_id', tplIds.length ? tplIds : ['00000000-0000-0000-0000-000000000000'])
+                        .order('order_index');
+                    const tex = (texRows ?? []);
+                    // Most recent performed top set per exercise (planned vs actual).
+                    const { data: recentSets } = await supabase
+                        .from('workout_set_log')
+                        .select('exercise_id,weight_kg,reps,completed_at')
+                        .eq('user_id', userId)
+                        .order('completed_at', { ascending: false })
+                        .limit(400);
+                    const lastByEx = new Map();
+                    for (const r of (recentSets ?? [])) {
+                        if (!lastByEx.has(r.exercise_id))
+                            lastByEx.set(r.exercise_id, { weight_kg: Number(r.weight_kg), reps: r.reps });
+                    }
+                    const { data: exIdRows } = await supabase.from('exercises').select('id,slug');
+                    const idBySlug = new Map((exIdRows ?? []).map((e) => [e.slug, e.id]));
+                    const days = templates.map((t) => ({
+                        day_order: t.day_order, day_name: t.day_name, phase: t.phase, coach_note: t.coach_note,
+                        auto_progress: t.auto_progress,
+                        exercises: tex.filter((x) => x.template_id === t.id).map((x) => {
+                            const last = lastByEx.get(idBySlug.get(x.exercise?.slug));
+                            return {
+                                exercise_slug: x.exercise?.slug, name: x.exercise?.name_en, is_timed: x.exercise?.is_timed,
+                                target_sets: x.target_sets, reps_min: x.target_reps_min, reps_max: x.target_reps_max,
+                                target_weight_kg: x.target_weight_kg != null ? Number(x.target_weight_kg) : null,
+                                rest_seconds: x.rest_seconds, progression_note: x.progression_note, warning_text: x.warning_text,
+                                last_performed: last ? { weight_kg: last.weight_kg, reps: last.reps } : null,
+                            };
+                        }),
+                    }));
+                    return { content: [{ type: 'text', text: JSON.stringify({ source: isPersonal ? 'coach' : 'system', editable: isPersonal, days }, null, 2) }] };
+                }
+                case 'save_workout_day': {
+                    const dayOrder = a.day_order;
+                    const exInput = a.exercises ?? [];
+                    if (!exInput.length)
+                        return { content: [{ type: 'text', text: 'Provide at least one exercise.' }], isError: true };
+                    // Resolve slugs → ids
+                    const slugs = exInput.map((e) => e.exercise_slug);
+                    const { data: exRows } = await supabase.from('exercises').select('id,slug,default_rest_seconds').in('slug', slugs);
+                    const bySlug = new Map((exRows ?? []).map((e) => [e.slug, e]));
+                    const missing = slugs.filter((s) => !bySlug.has(s));
+                    if (missing.length)
+                        return { content: [{ type: 'text', text: `Unknown exercise slug(s): ${missing.join(', ')}. Check get_exercise_catalog or create them with add_exercise.` }], isError: true };
+                    // Upsert the template by (user, day_order)
+                    const { data: existingTpl } = await supabase
+                        .from('workout_templates').select('id')
+                        .eq('user_id', userId).eq('day_order', dayOrder).maybeSingle();
+                    let templateId;
+                    const tplFields = {
+                        day_name: a.day_name, phase: a.phase ?? null, coach_note: a.coach_note ?? null,
+                        source: 'coach', is_active: true, auto_progress: a.auto_progress ?? true,
+                    };
+                    if (existingTpl) {
+                        templateId = existingTpl.id;
+                        await supabase.from('workout_templates').update(tplFields).eq('id', templateId);
+                        await supabase.from('workout_template_exercises').delete().eq('template_id', templateId);
+                    }
+                    else {
+                        const { data: ins, error } = await supabase.from('workout_templates')
+                            .insert({ user_id: userId, day_order: dayOrder, ...tplFields }).select('id').single();
+                        if (error)
+                            throw error;
+                        templateId = ins.id;
+                    }
+                    const rows = exInput.map((e, i) => {
+                        const ex = bySlug.get(e.exercise_slug);
+                        return {
+                            template_id: templateId, exercise_id: ex.id, order_index: i,
+                            target_sets: e.target_sets ?? 3, target_reps_min: e.reps_min ?? 8,
+                            target_reps_max: e.reps_max ?? null,
+                            target_weight_kg: e.target_weight_kg ?? null,
+                            rest_seconds: e.rest_seconds ?? ex.default_rest_seconds ?? 60,
+                            progression_note: e.progression_note ?? null, warning_text: e.warning_text ?? null,
+                        };
+                    });
+                    const { error: insErr } = await supabase.from('workout_template_exercises').insert(rows);
+                    if (insErr)
+                        throw insErr;
+                    return { content: [{ type: 'text', text: JSON.stringify({ saved: true, day_order: dayOrder, day_name: a.day_name, exercises: rows.length }, null, 2) }] };
+                }
+                case 'update_exercise_target': {
+                    const { data: tpl } = await supabase.from('workout_templates').select('id')
+                        .eq('user_id', userId).eq('day_order', a.day_order).maybeSingle();
+                    if (!tpl)
+                        return { content: [{ type: 'text', text: `No personal plan day with day_order ${a.day_order}. Build it with save_workout_day first.` }], isError: true };
+                    const { data: ex } = await supabase.from('exercises').select('id').eq('slug', a.exercise_slug).maybeSingle();
+                    if (!ex)
+                        return { content: [{ type: 'text', text: `Unknown exercise slug: ${a.exercise_slug}.` }], isError: true };
+                    const upd = {};
+                    if (a.target_weight_kg != null)
+                        upd.target_weight_kg = a.target_weight_kg;
+                    if (a.reps_min != null)
+                        upd.target_reps_min = a.reps_min;
+                    if (a.reps_max != null)
+                        upd.target_reps_max = a.reps_max;
+                    if (a.target_sets != null)
+                        upd.target_sets = a.target_sets;
+                    if (a.progression_note != null)
+                        upd.progression_note = a.progression_note;
+                    if (Object.keys(upd).length === 0)
+                        return { content: [{ type: 'text', text: 'Nothing to update.' }] };
+                    const { error } = await supabase.from('workout_template_exercises')
+                        .update(upd).eq('template_id', tpl.id).eq('exercise_id', ex.id);
+                    if (error)
+                        throw error;
+                    return { content: [{ type: 'text', text: JSON.stringify({ updated: true, day_order: a.day_order, exercise_slug: a.exercise_slug, changes: upd }, null, 2) }] };
+                }
+                case 'delete_workout_day': {
+                    const { data: tpl } = await supabase.from('workout_templates').select('id')
+                        .eq('user_id', userId).eq('day_order', a.day_order).maybeSingle();
+                    if (!tpl)
+                        return { content: [{ type: 'text', text: `No personal plan day with day_order ${a.day_order}.` }] };
+                    const { error } = await supabase.from('workout_templates').delete().eq('id', tpl.id);
+                    if (error)
+                        throw error;
+                    return { content: [{ type: 'text', text: `Deleted plan day ${a.day_order}.` }] };
+                }
+                case 'get_workout_adherence': {
+                    const weeks = a.weeks ?? 4;
+                    const since = new Date(Date.now() - weeks * 7 * 86400000).toISOString().slice(0, 10);
+                    const [{ data: sessRows }, { data: planRows }] = await Promise.all([
+                        supabase.from('workout_sessions')
+                            .select('id,date,template_id,completed_status,total_volume_kg')
+                            .eq('user_id', userId).eq('completed_status', 'completed').gte('date', since)
+                            .order('date', { ascending: false }),
+                        supabase.from('workout_templates').select('id,day_name,day_order').eq('user_id', userId).eq('is_active', true),
+                    ]);
+                    const sessions = (sessRows ?? []);
+                    const plannedDays = (planRows ?? []).length;
+                    // sessions per ISO week
+                    const weekBuckets = new Map();
+                    for (const s of sessions) {
+                        const d = new Date(s.date + 'T00:00:00Z');
+                        const day = (d.getUTCDay() + 6) % 7;
+                        const monday = new Date(d);
+                        monday.setUTCDate(d.getUTCDate() - day);
+                        const key = monday.toISOString().slice(0, 10);
+                        weekBuckets.set(key, (weekBuckets.get(key) ?? 0) + 1);
+                    }
+                    const weekly = Array.from(weekBuckets.entries())
+                        .map(([week_starting, done]) => ({ week_starting, sessions_done: done, planned_days: plannedDays || null }))
+                        .sort((x, y) => (x.week_starting < y.week_starting ? -1 : 1));
+                    // ready-to-progress: most recent completed session per exercise hit top of range on all sets
+                    const { data: planEx } = await supabase
+                        .from('workout_template_exercises')
+                        .select('target_reps_max,exercise:exercises(id,slug,name_en)')
+                        .in('template_id', (planRows ?? []).map((p) => p.id).length ? (planRows ?? []).map((p) => p.id) : ['00000000-0000-0000-0000-000000000000']);
+                    const readyChecks = [];
+                    for (const pe of (planEx ?? [])) {
+                        const top = pe.target_reps_max;
+                        if (!top || !pe.exercise?.id)
+                            continue;
+                        const { data: lastSet } = await supabase
+                            .from('workout_set_log')
+                            .select('session_id,reps,weight_kg,completed_at')
+                            .eq('user_id', userId).eq('exercise_id', pe.exercise.id)
+                            .order('completed_at', { ascending: false }).limit(1).maybeSingle();
+                        if (!lastSet)
+                            continue;
+                        const sid = lastSet.session_id;
+                        const { data: setsInSession } = await supabase
+                            .from('workout_set_log').select('reps,weight_kg').eq('session_id', sid).eq('exercise_id', pe.exercise.id);
+                        const ss = (setsInSession ?? []);
+                        const hitTop = ss.length > 0 && ss.every((s) => s.reps >= top);
+                        readyChecks.push({
+                            exercise_slug: pe.exercise.slug, name: pe.exercise.name_en,
+                            last_top_set_reps: Math.max(...ss.map((s) => s.reps), 0),
+                            target_reps_max: top, current_weight_kg: Number(lastSet.weight_kg),
+                            ready_to_progress: hitTop, suggested_next_weight_kg: hitTop ? round1(Number(lastSet.weight_kg) + 2.5) : null,
+                        });
+                    }
+                    return { content: [{ type: 'text', text: JSON.stringify({ period_weeks: weeks, planned_days_per_cycle: plannedDays || null, total_completed: sessions.length, weekly, ready_to_progress: readyChecks }, null, 2) }] };
                 }
                 default:
                     throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);

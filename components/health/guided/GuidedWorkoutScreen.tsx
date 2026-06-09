@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useI18n } from '@/lib/i18n/context';
-import { X } from 'lucide-react';
+import { X, Clock } from 'lucide-react';
 import { ExerciseCard } from './ExerciseCard';
 import { SetLogger } from './SetLogger';
 import { RestTimer } from './RestTimer';
@@ -26,6 +26,17 @@ export function GuidedWorkoutScreen({
   const [setIndex, setSetIndex] = useState(0); // 0-based
   const [phase, setPhase] = useState<Phase>('active');
   const [summary, setSummary] = useState<SessionSummary | null>(null);
+
+  // Live elapsed workout timer (stops once we reach the summary).
+  const startRef = useRef<number>(Date.now());
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (phase === 'summary') return;
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - startRef.current) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [phase]);
+  const mm = Math.floor(elapsed / 60);
+  const ss = elapsed % 60;
 
   // Per-exercise running defaults (prefill next set with what you just did)
   const defaultsRef = useRef<Record<string, { weight: number; reps: number }>>({});
@@ -115,7 +126,12 @@ export function GuidedWorkoutScreen({
               </button>
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-bold">{session.dayName}</span>
+                  <span className="text-xs font-bold flex items-center gap-1.5">
+                    {session.dayName}
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-muted-foreground tabular-nums">
+                      <Clock size={11} />{mm}:{String(ss).padStart(2, '0')}
+                    </span>
+                  </span>
                   <span className="text-[11px] font-bold text-muted-foreground tabular-nums">
                     {t('gw.exerciseProgress', { a: exIndex + 1, b: exercises.length })}
                   </span>

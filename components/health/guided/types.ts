@@ -17,6 +17,10 @@ export interface GuidedExercise {
   repsMin: number;       // 0 means AMRAP / "max reps"
   repsMax: number | null;
   restSeconds: number;
+  /** predetermined working weight from the coach plan, or null (bodyweight / not set) */
+  targetWeight: number | null;
+  /** coach guidance for progressing this lift, or null */
+  progressionNote: string | null;
   /** "40kg × 10" from the most recent prior session, or null if first time */
   lastSummary: string | null;
   /** suggested working weight from progression logic, or null */

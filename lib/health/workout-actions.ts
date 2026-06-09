@@ -174,6 +174,38 @@ export async function finishSession(sessionId: string): Promise<SessionSummary> 
     .eq('id', sessionId)
     .eq('user_id', user.id);
 
+  // ── Auto-progression ──
+  // On the user's own auto-progress plan, bump each exercise's target weight
+  // +2.5kg when every logged set hit the top of the rep range.
+  if (session.template_id) {
+    const { data: tpl } = await supabase
+      .from('workout_templates')
+      .select('id,user_id,auto_progress')
+      .eq('id', session.template_id)
+      .maybeSingle();
+    if (tpl && tpl.user_id === user.id && tpl.auto_progress) {
+      const { data: planEx } = await supabase
+        .from('workout_template_exercises')
+        .select('exercise_id,target_reps_max,target_weight_kg')
+        .eq('template_id', session.template_id);
+      for (const pe of (planEx ?? []) as { exercise_id: string; target_reps_max: number | null; target_weight_kg: number | null }[]) {
+        const top = pe.target_reps_max;
+        if (!top) continue;
+        const mine = sets.filter((s) => s.exercise_id === pe.exercise_id);
+        if (mine.length === 0 || !mine.every((s) => s.reps >= top)) continue;
+        const base = pe.target_weight_kg != null
+          ? Number(pe.target_weight_kg)
+          : Math.max(...mine.map((s) => Number(s.weight_kg)), 0);
+        if (base <= 0) continue;
+        await supabase
+          .from('workout_template_exercises')
+          .update({ target_weight_kg: base + INCREMENT_KG })
+          .eq('template_id', session.template_id)
+          .eq('exercise_id', pe.exercise_id);
+      }
+    }
+  }
+
   // Mirror into legacy workout_log so dashboard net-calories / streak / MCP keep working
   await supabase.from('workout_log').insert({
     user_id: user.id,

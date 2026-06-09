@@ -7,7 +7,8 @@ export interface OverviewTemplate {
   dayOrder: number;
   dayName: string;
   phase: string | null;
-  exercises: { nameEn: string; nameHe: string | null }[];
+  coachNote?: string | null;
+  exercises: { nameEn: string; nameHe: string | null; weightKg?: number | null }[];
 }
 
 export function WorkoutOverview({
@@ -34,16 +35,17 @@ export function WorkoutOverview({
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{t('gw.todaysPlan')}</span>
           <h2 className="text-2xl font-black mt-1.5">{recommended.dayName}</h2>
           {recommended.phase && <p className="text-xs font-semibold text-muted-foreground mt-0.5">{recommended.phase}</p>}
+          {recommended.coachNote && <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{recommended.coachNote}</p>}
 
           <div className="flex flex-wrap gap-1.5 mt-3">
-            {recommended.exercises.slice(0, 5).map((e, i) => (
+            {recommended.exercises.slice(0, 6).map((e, i) => (
               <span key={i} className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-card/60 text-muted-foreground">
-                {exName(e)}
+                {exName(e)}{e.weightKg != null ? ` · ${e.weightKg}kg` : ''}
               </span>
             ))}
-            {recommended.exercises.length > 5 && (
+            {recommended.exercises.length > 6 && (
               <span className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-card/60 text-muted-foreground">
-                +{recommended.exercises.length - 5}
+                +{recommended.exercises.length - 6}
               </span>
             )}
           </div>

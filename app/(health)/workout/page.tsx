@@ -21,9 +21,9 @@ type WorkoutEntry = {
   notes: string | null;
 };
 
-type TemplateRow = { id: string; day_order: number; day_name: string; phase: string | null };
+type TemplateRow = { id: string; day_order: number; day_name: string; phase: string | null; coach_note: string | null };
 type TexRow = {
-  template_id: string; order_index: number;
+  template_id: string; order_index: number; target_weight_kg: number | null;
   exercise: { name_en: string; name_he: string | null } | null;
 };
 
@@ -46,7 +46,8 @@ export default async function WorkoutPage() {
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
-  const [{ data: historyRaw }, { data: templatesRaw }, { data: texRaw }, { data: lastSession }] = await Promise.all([
+  // Prefer the user's personal coach plan; fall back to the default system split.
+  const [{ data: historyRaw }, { data: userTplRaw }, { data: lastSession }] = await Promise.all([
     supabase
       .from('workout_log')
       .select('id,date,type,duration_minutes,calories_burned,notes')
@@ -55,13 +56,10 @@ export default async function WorkoutPage() {
       .limit(20),
     supabase
       .from('workout_templates')
-      .select('id,day_order,day_name,phase')
-      .is('user_id', null)
+      .select('id,day_order,day_name,phase,coach_note')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
       .order('day_order'),
-    supabase
-      .from('workout_template_exercises')
-      .select('template_id,order_index,exercise:exercises(name_en,name_he)')
-      .order('order_index'),
     supabase
       .from('workout_sessions')
       .select('template_id')
@@ -72,7 +70,22 @@ export default async function WorkoutPage() {
       .maybeSingle(),
   ]);
 
-  const templates = (templatesRaw ?? []) as TemplateRow[];
+  let templates = (userTplRaw ?? []) as TemplateRow[];
+  const usingPersonalPlan = templates.length > 0;
+  if (!usingPersonalPlan) {
+    const { data: sysTpl } = await supabase
+      .from('workout_templates')
+      .select('id,day_order,day_name,phase,coach_note')
+      .is('user_id', null)
+      .order('day_order');
+    templates = (sysTpl ?? []) as TemplateRow[];
+  }
+
+  const { data: texRaw } = await supabase
+    .from('workout_template_exercises')
+    .select('template_id,order_index,target_weight_kg,exercise:exercises(name_en,name_he)')
+    .in('template_id', templates.length ? templates.map((tpl) => tpl.id) : ['00000000-0000-0000-0000-000000000000'])
+    .order('order_index');
   const tex = (texRaw ?? []) as unknown as TexRow[];
 
   const overviewTemplates: OverviewTemplate[] = templates.map((tpl) => ({
@@ -80,18 +93,20 @@ export default async function WorkoutPage() {
     dayOrder: tpl.day_order,
     dayName: tpl.day_name,
     phase: tpl.phase,
+    coachNote: tpl.coach_note,
     exercises: tex
       .filter((x) => x.template_id === tpl.id)
-      .map((x) => ({ nameEn: x.exercise?.name_en ?? '', nameHe: x.exercise?.name_he ?? null }))
+      .map((x) => ({ nameEn: x.exercise?.name_en ?? '', nameHe: x.exercise?.name_he ?? null, weightKg: x.target_weight_kg != null ? Number(x.target_weight_kg) : null }))
       .filter((x) => x.nameEn),
   }));
 
-  // Recommended = next day in the rotation after the last completed session
-  let recommendedOrder = 1;
+  // Recommended = next day in the rotation after the last completed session.
+  const dayCount = templates.length || 4;
+  let recommendedOrder = templates[0]?.day_order ?? 1;
   const lastTemplateId = (lastSession as { template_id: string } | null)?.template_id;
   if (lastTemplateId) {
     const lastOrder = templates.find((x) => x.id === lastTemplateId)?.day_order;
-    if (lastOrder) recommendedOrder = (lastOrder % 4) + 1;
+    if (lastOrder) recommendedOrder = (lastOrder % dayCount) + 1;
   }
 
   const entries = (historyRaw ?? []) as WorkoutEntry[];

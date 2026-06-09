@@ -1,7 +1,7 @@
 'use client';
 
 import { useI18n } from '@/lib/i18n/context';
-import { Dumbbell, AlertTriangle, History, TrendingUp } from 'lucide-react';
+import { Dumbbell, AlertTriangle, History, TrendingUp, Target } from 'lucide-react';
 import type { GuidedExercise } from './types';
 
 export function ExerciseCard({
@@ -61,7 +61,7 @@ export function ExerciseCard({
         </div>
       )}
 
-      {/* History + suggestion */}
+      {/* History + plan target / suggestion */}
       <div className="flex gap-2">
         <div className="flex-1 rounded-2xl px-3.5 py-3 bg-card border border-border">
           <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
@@ -70,7 +70,15 @@ export function ExerciseCard({
           </div>
           <p className="text-sm font-bold">{exercise.lastSummary ?? t('gw.firstTime')}</p>
         </div>
-        {exercise.suggestedWeight != null && (
+        {exercise.targetWeight != null && !exercise.isTimed ? (
+          <div className="flex-1 rounded-2xl px-3.5 py-3 bg-primary/10 border border-primary/30">
+            <div className="flex items-center gap-1.5 text-primary mb-1">
+              <Target size={13} />
+              <span className="text-[10px] font-bold uppercase tracking-wider">{t('gw.planTarget')}</span>
+            </div>
+            <p className="text-sm font-bold text-primary">{exercise.targetWeight}{t('unit.kg')} × {repTarget}</p>
+          </div>
+        ) : exercise.suggestedWeight != null && (
           <div className="flex-1 rounded-2xl px-3.5 py-3 bg-primary/10 border border-primary/30">
             <div className="flex items-center gap-1.5 text-primary mb-1">
               <TrendingUp size={13} />
@@ -80,6 +88,13 @@ export function ExerciseCard({
           </div>
         )}
       </div>
+
+      {exercise.progressionNote && (
+        <div className="flex items-start gap-2 rounded-2xl px-3.5 py-2.5 bg-primary/5 border border-primary/20">
+          <TrendingUp size={14} className="text-primary shrink-0 mt-0.5" />
+          <p className="text-xs font-medium text-primary/90">{exercise.progressionNote}</p>
+        </div>
+      )}
 
       {exercise.instructions && (
         <p className="text-xs text-muted-foreground leading-relaxed px-1">{exercise.instructions}</p>
