@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { WorkoutLogForm } from '@/components/health/WorkoutLogForm';
 import { DeleteWorkoutButton } from '@/components/health/DeleteWorkoutButton';
+import { WorkoutOverview, type OverviewTemplate } from '@/components/health/WorkoutOverview';
 import { ScrollShell } from '@/components/health/ScrollShell';
 import { getT, getLang } from '@/lib/i18n/server';
 import type { TranslationKey } from '@/lib/i18n/translations';
@@ -18,6 +19,12 @@ type WorkoutEntry = {
   duration_minutes: number | null;
   calories_burned: number | null;
   notes: string | null;
+};
+
+type TemplateRow = { id: string; day_order: number; day_name: string; phase: string | null };
+type TexRow = {
+  template_id: string; order_index: number;
+  exercise: { name_en: string; name_he: string | null } | null;
 };
 
 const TYPE_EMOJI: Record<string, string> = {
@@ -39,12 +46,53 @@ export default async function WorkoutPage() {
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
-  const { data: historyRaw } = await supabase
-    .from('workout_log')
-    .select('id,date,type,duration_minutes,calories_burned,notes')
-    .eq('user_id', user.id)
-    .order('logged_at', { ascending: false })
-    .limit(20);
+  const [{ data: historyRaw }, { data: templatesRaw }, { data: texRaw }, { data: lastSession }] = await Promise.all([
+    supabase
+      .from('workout_log')
+      .select('id,date,type,duration_minutes,calories_burned,notes')
+      .eq('user_id', user.id)
+      .order('logged_at', { ascending: false })
+      .limit(20),
+    supabase
+      .from('workout_templates')
+      .select('id,day_order,day_name,phase')
+      .is('user_id', null)
+      .order('day_order'),
+    supabase
+      .from('workout_template_exercises')
+      .select('template_id,order_index,exercise:exercises(name_en,name_he)')
+      .order('order_index'),
+    supabase
+      .from('workout_sessions')
+      .select('template_id')
+      .eq('user_id', user.id)
+      .eq('completed_status', 'completed')
+      .order('ended_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const templates = (templatesRaw ?? []) as TemplateRow[];
+  const tex = (texRaw ?? []) as unknown as TexRow[];
+
+  const overviewTemplates: OverviewTemplate[] = templates.map((tpl) => ({
+    id: tpl.id,
+    dayOrder: tpl.day_order,
+    dayName: tpl.day_name,
+    phase: tpl.phase,
+    exercises: tex
+      .filter((x) => x.template_id === tpl.id)
+      .map((x) => ({ nameEn: x.exercise?.name_en ?? '', nameHe: x.exercise?.name_he ?? null }))
+      .filter((x) => x.nameEn),
+  }));
+
+  // Recommended = next day in the rotation after the last completed session
+  let recommendedOrder = 1;
+  const lastTemplateId = (lastSession as { template_id: string } | null)?.template_id;
+  if (lastTemplateId) {
+    const lastOrder = templates.find((x) => x.id === lastTemplateId)?.day_order;
+    if (lastOrder) recommendedOrder = (lastOrder % 4) + 1;
+  }
 
   const entries = (historyRaw ?? []) as WorkoutEntry[];
   const todayEntries = entries.filter((e) => e.date === today);
@@ -65,7 +113,12 @@ export default async function WorkoutPage() {
         <p className="text-sm text-muted-foreground">{format(new Date(), 'EEEE, d MMMM', { locale: dateLocale })}</p>
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-5">
+        {/* Guided workout entry point */}
+        {overviewTemplates.length > 0 && (
+          <WorkoutOverview templates={overviewTemplates} recommendedOrder={recommendedOrder} />
+        )}
+
         {/* Today summary */}
         <div className="grid grid-cols-2 gap-3">
           <div className="glass-card rounded-2xl p-4 text-center">
