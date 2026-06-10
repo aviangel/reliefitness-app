@@ -14,6 +14,7 @@ export type Database = {
           protein_goal_g: number;
           carbs_goal_g: number;
           fat_goal_g: number;
+          sugar_goal_g: number;
           hernia_flag: boolean | null;
           created_at: string | null;
           updated_at: string | null;
@@ -30,6 +31,7 @@ export type Database = {
           protein_goal_g?: number;
           carbs_goal_g?: number;
           fat_goal_g?: number;
+          sugar_goal_g?: number;
           hernia_flag?: boolean | null;
           created_at?: string | null;
           updated_at?: string | null;
@@ -46,6 +48,7 @@ export type Database = {
           protein_goal_g?: number;
           carbs_goal_g?: number;
           fat_goal_g?: number;
+          sugar_goal_g?: number;
           hernia_flag?: boolean | null;
           created_at?: string | null;
           updated_at?: string | null;
@@ -61,6 +64,7 @@ export type Database = {
           protein_per_100g: number | null;
           carbs_per_100g: number | null;
           fat_per_100g: number | null;
+          sugar_per_100g: number | null;
           default_portion_g: number | null;
           is_active: boolean | null;
           created_at: string | null;
@@ -74,6 +78,7 @@ export type Database = {
           protein_per_100g?: number | null;
           carbs_per_100g?: number | null;
           fat_per_100g?: number | null;
+          sugar_per_100g?: number | null;
           default_portion_g?: number | null;
           is_active?: boolean | null;
           created_at?: string | null;
@@ -87,6 +92,7 @@ export type Database = {
           protein_per_100g?: number | null;
           carbs_per_100g?: number | null;
           fat_per_100g?: number | null;
+          sugar_per_100g?: number | null;
           default_portion_g?: number | null;
           is_active?: boolean | null;
           created_at?: string | null;
@@ -106,6 +112,7 @@ export type Database = {
           protein_g: number | null;
           carbs_g: number | null;
           fat_g: number | null;
+          sugar_g: number | null;
           status: string | null;
           notes: string | null;
           logged_at: string | null;
@@ -124,6 +131,7 @@ export type Database = {
           protein_g?: number | null;
           carbs_g?: number | null;
           fat_g?: number | null;
+          sugar_g?: number | null;
           status?: string | null;
           notes?: string | null;
           logged_at?: string | null;
@@ -142,6 +150,7 @@ export type Database = {
           protein_g?: number | null;
           carbs_g?: number | null;
           fat_g?: number | null;
+          sugar_g?: number | null;
           status?: string | null;
           notes?: string | null;
           logged_at?: string | null;

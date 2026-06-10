@@ -32,7 +32,7 @@ export default async function DashboardPage() {
   const [mealsRes, profileRes, weightRes, drinksRes, workoutRes, stepsRes] = await Promise.all([
     supabase
       .from('meals_log')
-      .select('id,meal_type,food_name,food_name_he,portion_g,calories,protein_g,carbs_g,fat_g,status,logged_at')
+      .select('id,meal_type,food_name,food_name_he,portion_g,calories,protein_g,carbs_g,fat_g,sugar_g,status,logged_at')
       .eq('user_id', user.id)
       .eq('date', today)
       .order('logged_at'),
@@ -75,6 +75,7 @@ export default async function DashboardPage() {
   const totalProtein = Math.round(allMeals.reduce((s, m) => s + (m.protein_g ?? 0), 0) * 10) / 10;
   const totalCarbs = Math.round(allMeals.reduce((s, m) => s + (m.carbs_g ?? 0), 0) * 10) / 10;
   const totalFat = Math.round(allMeals.reduce((s, m) => s + (m.fat_g ?? 0), 0) * 10) / 10;
+  const totalSugar = Math.round(allMeals.reduce((s, m) => s + (m.sugar_g ?? 0), 0) * 10) / 10;
 
   const currentWeight = weightHistory?.[0]?.weight_kg ?? p.current_weight_kg;
   const kgToGo = Math.max(0, Number(currentWeight) - Number(p.target_weight_kg));
@@ -109,6 +110,7 @@ export default async function DashboardPage() {
     protein: totalProtein, proteinGoal: Number(p.protein_goal_g),
     carbs: totalCarbs, carbsGoal: Number(p.carbs_goal_g),
     fat: totalFat, fatGoal: Number(p.fat_goal_g),
+    sugar: totalSugar, sugarGoal: Number((p as { sugar_goal_g?: number }).sugar_goal_g ?? 50),
     meals: allMeals.map((m) => ({
       meal_type: m.meal_type,
       food_name: lang === 'he' && m.food_name_he ? m.food_name_he : m.food_name,

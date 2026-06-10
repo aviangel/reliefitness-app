@@ -109,6 +109,7 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
             protein_per_100g: { type: 'number' },
             carbs_per_100g: { type: 'number' },
             fat_per_100g: { type: 'number' },
+            sugar_per_100g: { type: 'number', description: 'Sugar per 100g (subset of carbs). Default 0 if unknown.' },
             default_portion_g: { type: 'number', description: 'Typical serving in grams/ml.' },
           },
           required: ['name', 'category', 'calories_per_100g', 'protein_per_100g', 'carbs_per_100g', 'fat_per_100g', 'default_portion_g'],
@@ -144,6 +145,7 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
             protein_g: { type: 'number' },
             carbs_g: { type: 'number' },
             fat_g: { type: 'number' },
+            sugar_g: { type: 'number', description: 'Sugar in grams (subset of carbs). Default 0 if unknown.' },
             portion_g: { type: 'number', description: 'Actual portion in grams.' },
             date: { type: 'string', description: 'YYYY-MM-DD. Omit for today.' },
           },
@@ -223,6 +225,7 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
             protein_goal_g: { type: 'number' },
             carbs_goal_g: { type: 'number' },
             fat_goal_g: { type: 'number' },
+            sugar_goal_g: { type: 'number', description: 'Daily sugar limit in grams.' },
             water_goal_ml: { type: 'number', description: 'Daily water target in ml.' },
           },
           required: [],
@@ -517,6 +520,7 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
                   protein: { eaten: round1(meals.reduce((s, m) => s + (m.protein_g ?? 0), 0)), goal: p?.protein_goal_g ?? 150 },
                   carbs: { eaten: round1(meals.reduce((s, m) => s + (m.carbs_g ?? 0), 0)), goal: p?.carbs_goal_g ?? 200 },
                   fat: { eaten: round1(meals.reduce((s, m) => s + (m.fat_g ?? 0), 0)), goal: p?.fat_goal_g ?? 65 },
+                  sugar: { eaten: round1(meals.reduce((s, m) => s + (m.sugar_g ?? 0), 0)), goal: p?.sugar_goal_g ?? 50 },
                 },
                 meals_logged: meals.length,
                 water_ml: totalWater, water_goal_ml: waterGoal, water_remaining_ml: Math.max(0, waterGoal - totalWater),
@@ -532,7 +536,7 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
 
         case 'get_meals': {
           const d = (a.date as string) ?? today();
-          const { data } = await supabase.from('meals_log').select('id,meal_type,food_name,portion_g,calories,protein_g,carbs_g,fat_g,logged_at').eq('user_id', userId).eq('date', d).order('logged_at');
+          const { data } = await supabase.from('meals_log').select('id,meal_type,food_name,portion_g,calories,protein_g,carbs_g,fat_g,sugar_g,logged_at').eq('user_id', userId).eq('date', d).order('logged_at');
           const meals = (data ?? []) as any[];
           return {
             content: [{
@@ -543,6 +547,7 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
                   protein_g: round1(meals.reduce((s, m) => s + (m.protein_g ?? 0), 0)),
                   carbs_g: round1(meals.reduce((s, m) => s + (m.carbs_g ?? 0), 0)),
                   fat_g: round1(meals.reduce((s, m) => s + (m.fat_g ?? 0), 0)),
+                  sugar_g: round1(meals.reduce((s, m) => s + (m.sugar_g ?? 0), 0)),
                 },
                 meals,
               }, null, 2),
@@ -595,7 +600,7 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
                 name: p.name, height_cm: p.height_cm,
                 current_weight_kg: Number(p.current_weight_kg), target_weight_kg: Number(p.target_weight_kg),
                 to_lose_kg: round1(Number(p.current_weight_kg) - Number(p.target_weight_kg)),
-                goals: { calorie_goal: p.calorie_goal, protein_goal_g: p.protein_goal_g, carbs_goal_g: p.carbs_goal_g, fat_goal_g: p.fat_goal_g, water_goal_ml: p.water_goal_ml ?? 2500 },
+                goals: { calorie_goal: p.calorie_goal, protein_goal_g: p.protein_goal_g, carbs_goal_g: p.carbs_goal_g, fat_goal_g: p.fat_goal_g, sugar_goal_g: p.sugar_goal_g ?? 50, water_goal_ml: p.water_goal_ml ?? 2500 },
               }, null, 2),
             }],
           };
@@ -642,7 +647,7 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
         }
 
         case 'list_foods': {
-          let query = supabase.from('foods').select('name,name_he,category,calories_per_100g,protein_per_100g,carbs_per_100g,fat_per_100g,default_portion_g').eq('is_active', true).order('category').order('name');
+          let query = supabase.from('foods').select('name,name_he,category,calories_per_100g,protein_per_100g,carbs_per_100g,fat_per_100g,sugar_per_100g,default_portion_g').eq('is_active', true).order('category').order('name');
           if (a.search) query = (query as any).or(`name.ilike.%${a.search}%,name_he.ilike.%${a.search}%`);
           const { data } = await query.limit(60);
           const foods = (data ?? []).map((f: any) => ({
@@ -652,6 +657,7 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
               protein_g: round1(f.protein_per_100g * f.default_portion_g / 100),
               carbs_g: round1(f.carbs_per_100g * f.default_portion_g / 100),
               fat_g: round1(f.fat_per_100g * f.default_portion_g / 100),
+              sugar_g: round1((f.sugar_per_100g ?? 0) * f.default_portion_g / 100),
             },
           }));
           return { content: [{ type: 'text', text: JSON.stringify(foods, null, 2) }] };
@@ -669,6 +675,7 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
             food_id: food.id, food_name: food.name, food_name_he: food.name_he ?? null, portion_g: portionG,
             calories: Math.round(food.calories_per_100g * f),
             protein_g: round1(food.protein_per_100g * f), carbs_g: round1(food.carbs_per_100g * f), fat_g: round1(food.fat_per_100g * f),
+            sugar_g: round1((food.sugar_per_100g ?? 0) * f),
             status: 'eaten',
           }).select('id').single();
           if (error) throw error;
@@ -678,6 +685,7 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
                 logged: true, id: (inserted as any)?.id, food: food.name, meal_type: a.meal_type,
                 portion_g: portionG, calories: Math.round(food.calories_per_100g * f),
                 protein_g: round1(food.protein_per_100g * f), carbs_g: round1(food.carbs_per_100g * f), fat_g: round1(food.fat_per_100g * f),
+                sugar_g: round1((food.sugar_per_100g ?? 0) * f),
               }, null, 2),
             }],
           };
@@ -698,6 +706,7 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
             protein_per_100g: a.protein_per_100g,
             carbs_per_100g: a.carbs_per_100g,
             fat_per_100g: a.fat_per_100g,
+            sugar_per_100g: (a.sugar_per_100g as number) ?? 0,
             default_portion_g: portionG,
             is_active: true,
           });
@@ -713,6 +722,7 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
                   protein_g: round1((a.protein_per_100g as number) * f),
                   carbs_g: round1((a.carbs_per_100g as number) * f),
                   fat_g: round1((a.fat_per_100g as number) * f),
+                  sugar_g: round1(((a.sugar_per_100g as number) ?? 0) * f),
                 },
                 next_step: 'Food saved. Now call log_meal with this exact name.',
               }, null, 2),
@@ -736,6 +746,7 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
             protein_g: a.protein_g,
             carbs_g: a.carbs_g,
             fat_g: a.fat_g,
+            sugar_g: (a.sugar_g as number) ?? 0,
             status: 'eaten',
           }).select('id').single();
           if (error) throw error;
@@ -752,6 +763,7 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
                 protein_g: a.protein_g,
                 carbs_g: a.carbs_g,
                 fat_g: a.fat_g,
+                sugar_g: (a.sugar_g as number) ?? 0,
               }, null, 2),
             }],
           };
@@ -809,6 +821,7 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
           if (a.protein_goal_g != null) updates.protein_goal_g = a.protein_goal_g;
           if (a.carbs_goal_g != null) updates.carbs_goal_g = a.carbs_goal_g;
           if (a.fat_goal_g != null) updates.fat_goal_g = a.fat_goal_g;
+          if (a.sugar_goal_g != null) updates.sugar_goal_g = a.sugar_goal_g;
           if (a.water_goal_ml != null) updates.water_goal_ml = a.water_goal_ml;
           const { error } = await supabase.from('user_profile').update(updates).eq('user_id', userId);
           if (error) throw error;

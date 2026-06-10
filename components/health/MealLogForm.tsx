@@ -253,7 +253,7 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
             </span>
             <span className="text-lg text-muted-foreground ms-1">{t('unit.kcal')}</span>
           </div>
-          <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="grid grid-cols-4 gap-2 text-center">
             <div className="bg-blue-500/[0.08] border border-blue-500/[0.12] rounded-2xl p-3">
               <div className="text-base font-black text-blue-400 tabular-nums">{calcNutrient(selectedFood.protein_per_100g)}g</div>
               <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">{t('form.protein')}</div>
@@ -265,6 +265,10 @@ export function MealLogForm({ defaultMealType }: MealLogFormProps) {
             <div className="bg-pink-500/[0.08] border border-pink-500/[0.12] rounded-2xl p-3">
               <div className="text-base font-black text-pink-400 tabular-nums">{calcNutrient(selectedFood.fat_per_100g)}g</div>
               <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">{t('form.fat')}</div>
+            </div>
+            <div className="bg-rose-500/[0.08] border border-rose-500/[0.12] rounded-2xl p-3">
+              <div className="text-base font-black text-rose-400 tabular-nums">{calcNutrient(selectedFood.sugar_per_100g)}g</div>
+              <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">{t('form.sugar')}</div>
             </div>
           </div>
         </div>

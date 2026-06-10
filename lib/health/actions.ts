@@ -29,6 +29,7 @@ export async function logMeal(formData: FormData) {
     protein_g: Math.round(food.protein_per_100g * factor * 10) / 10,
     carbs_g: Math.round(food.carbs_per_100g * factor * 10) / 10,
     fat_g: Math.round(food.fat_per_100g * factor * 10) / 10,
+    sugar_g: Math.round(food.sugar_per_100g * factor * 10) / 10,
     status: 'eaten',
     date: new Date().toISOString().split('T')[0],
   });
@@ -83,6 +84,7 @@ export async function updateGoals(
   proteinGoal: number,
   carbsGoal: number,
   fatGoal: number,
+  sugarGoal: number,
   waterGoalMl?: number
 ) {
   const supabase = createClient() as any;
@@ -96,6 +98,7 @@ export async function updateGoals(
       protein_goal_g: proteinGoal,
       carbs_goal_g: carbsGoal,
       fat_goal_g: fatGoal,
+      sugar_goal_g: sugarGoal,
       ...(waterGoalMl != null ? { water_goal_ml: waterGoalMl } : {}),
       updated_at: new Date().toISOString(),
     },

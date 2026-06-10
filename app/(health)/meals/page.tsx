@@ -24,7 +24,7 @@ export default async function MealsPage() {
 
   const { data: meals } = await supabase
     .from('meals_log')
-    .select('id,meal_type,food_name,food_name_he,portion_g,calories,protein_g,carbs_g,fat_g,status,logged_at')
+    .select('id,meal_type,food_name,food_name_he,portion_g,calories,protein_g,carbs_g,fat_g,sugar_g,status,logged_at')
     .eq('user_id', user.id)
     .eq('date', today)
     .order('logged_at');
@@ -108,6 +108,9 @@ export default async function MealsPage() {
                       )}
                       {entry.protein_g != null && (
                         <span className="text-[11px] text-blue-400 font-medium">{t('meals.proteinShort', { n: entry.protein_g })}</span>
+                      )}
+                      {entry.sugar_g != null && entry.sugar_g > 0 && (
+                        <span className="text-[11px] text-rose-400 font-medium">{t('meals.sugarShort', { n: entry.sugar_g })}</span>
                       )}
                     </div>
                   </div>

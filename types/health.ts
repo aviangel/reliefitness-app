@@ -11,6 +11,7 @@ export const DEFAULT_PROFILE = {
   protein_goal_g: 150,
   carbs_goal_g: 200,
   fat_goal_g: 65,
+  sugar_goal_g: 50,
   water_goal_ml: 2500,
   hernia_flag: true,
 };
@@ -23,6 +24,7 @@ export interface FoodItem {
   protein_per_100g: number;
   carbs_per_100g: number;
   fat_per_100g: number;
+  sugar_per_100g: number;
   default_portion_g: number;
 }
 
@@ -39,6 +41,7 @@ export interface MealLogEntry {
   protein_g: number | null;
   carbs_g: number | null;
   fat_g: number | null;
+  sugar_g: number | null;
   status: 'eaten' | 'skipped';
   notes: string | null;
   logged_at: string;
@@ -63,6 +66,7 @@ export interface UserProfileRow {
   protein_goal_g: number;
   carbs_goal_g: number;
   fat_goal_g: number;
+  sugar_goal_g: number;
   water_goal_ml: number;
   hernia_flag: boolean;
 }

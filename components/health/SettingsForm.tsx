@@ -16,6 +16,7 @@ interface SettingsFormProps {
   proteinGoal: number;
   carbsGoal: number;
   fatGoal: number;
+  sugarGoal: number;
   waterGoalMl: number;
   currentWeight: number;
   targetWeight: number;
@@ -27,6 +28,7 @@ export function SettingsForm({
   proteinGoal: initProtein,
   carbsGoal: initCarbs,
   fatGoal: initFat,
+  sugarGoal: initSugar,
   waterGoalMl: initWater,
   currentWeight,
   targetWeight,
@@ -36,6 +38,7 @@ export function SettingsForm({
   const [proteinGoal, setProteinGoal] = useState(initProtein.toString());
   const [carbsGoal, setCarbsGoal] = useState(initCarbs.toString());
   const [fatGoal, setFatGoal] = useState(initFat.toString());
+  const [sugarGoal, setSugarGoal] = useState(initSugar.toString());
   const [waterGoal, setWaterGoal] = useState(initWater.toString());
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -49,6 +52,7 @@ export function SettingsForm({
         parseInt(proteinGoal) || 150,
         parseInt(carbsGoal) || 200,
         parseInt(fatGoal) || 65,
+        parseInt(sugarGoal) || 50,
         parseInt(waterGoal) || 2500
       );
       setSaved(true);
@@ -74,6 +78,7 @@ export function SettingsForm({
     { labelKey: 'settings.proteinGoal', value: proteinGoal, set: setProteinGoal, unit: t('unit.g'), color: 'text-blue-400' },
     { labelKey: 'settings.carbsGoal', value: carbsGoal, set: setCarbsGoal, unit: t('unit.g'), color: 'text-amber-400' },
     { labelKey: 'settings.fatGoal', value: fatGoal, set: setFatGoal, unit: t('unit.g'), color: 'text-pink-400' },
+    { labelKey: 'settings.sugarGoal', value: sugarGoal, set: setSugarGoal, unit: t('unit.g'), color: 'text-rose-400' },
     { labelKey: 'settings.waterGoal', value: waterGoal, set: setWaterGoal, unit: t('unit.ml'), color: 'text-sky-400' },
   ];
 

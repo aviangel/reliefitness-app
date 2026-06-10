@@ -22,6 +22,7 @@ export interface FypData {
   protein: number; proteinGoal: number;
   carbs: number; carbsGoal: number;
   fat: number; fatGoal: number;
+  sugar: number; sugarGoal: number;
   meals: { meal_type: string; food_name: string | null; calories: number | null }[];
   waterMl: number; waterGoalMl: number;
   currentWeight: number; targetWeight: number; kgToGo: number; goalProgress: number; todayHasWeight: boolean;
@@ -230,6 +231,7 @@ export function FypFeed(d: FypData) {
             <BigMacro label={t('form.protein')} value={d.protein} goal={d.proteinGoal} from="#3b82f6" to="#06b6d4" track={track} muted={muted} />
             <BigMacro label={t('form.carbs')} value={d.carbs} goal={d.carbsGoal} from="#f59e0b" to="#f97316" track={track} muted={muted} />
             <BigMacro label={t('form.fat')} value={d.fat} goal={d.fatGoal} from="#ec4899" to="#a855f7" track={track} muted={muted} />
+            <BigMacro label={t('form.sugar')} value={d.sugar} goal={d.sugarGoal} from="#f43f5e" to="#fb7185" track={track} muted={muted} />
           </div>
         </Panel>
 
