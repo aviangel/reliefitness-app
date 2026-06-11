@@ -5,6 +5,8 @@ import { SettingsForm } from '@/components/health/SettingsForm';
 import { ScrollShell } from '@/components/health/ScrollShell';
 import { getT } from '@/lib/i18n/server';
 
+const MCP_SERVER_URL = process.env.NEXT_PUBLIC_MCP_URL ?? 'https://reliefitness-mcp-production.up.railway.app';
+
 export const revalidate = 0;
 
 type ProfileRow = {
@@ -24,11 +26,10 @@ export default async function SettingsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: profileRaw } = await supabase
-    .from('user_profile')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
+  const [{ data: profileRaw }, { data: mcpKeyData }] = await Promise.all([
+    supabase.from('user_profile').select('*').eq('user_id', user.id).single(),
+    supabase.from('mcp_api_keys').select('api_key').eq('user_id', user.id).single(),
+  ]);
 
   const profile = profileRaw as ProfileRow | null;
   const p = profile ?? DEFAULT_PROFILE;
@@ -49,6 +50,8 @@ export default async function SettingsPage() {
         currentWeight={Number(p.current_weight_kg)}
         targetWeight={Number(p.target_weight_kg)}
         userId={user.id}
+        initApiKey={(mcpKeyData as any)?.api_key ?? null}
+        mcpServerUrl={MCP_SERVER_URL}
       />
     </ScrollShell>
   );

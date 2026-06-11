@@ -2,14 +2,14 @@
 
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
-import { updateGoals } from '@/lib/health/actions';
+import { updateGoals, generateApiKey } from '@/lib/health/actions';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useI18n } from '@/lib/i18n/context';
 import type { TranslationKey } from '@/lib/i18n/translations';
 import { LanguageToggle } from './LanguageToggle';
 import { ThemeToggle } from './ThemeToggle';
-import { CheckCircle2, LogOut, Moon, Ruler, Footprints, AlertTriangle, ChevronRight } from 'lucide-react';
+import { CheckCircle2, LogOut, Moon, Ruler, Footprints, AlertTriangle, ChevronRight, Copy, RefreshCw, Plug } from 'lucide-react';
 
 interface SettingsFormProps {
   calorieGoal: number;
@@ -21,6 +21,8 @@ interface SettingsFormProps {
   currentWeight: number;
   targetWeight: number;
   userId: string;
+  initApiKey: string | null;
+  mcpServerUrl: string;
 }
 
 export function SettingsForm({
@@ -32,6 +34,8 @@ export function SettingsForm({
   waterGoalMl: initWater,
   currentWeight,
   targetWeight,
+  initApiKey,
+  mcpServerUrl,
 }: SettingsFormProps) {
   const { t } = useI18n();
   const [calGoal, setCalGoal] = useState(initCal.toString());
@@ -44,6 +48,34 @@ export function SettingsForm({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const supabase = createClient();
+
+  // MCP API key state
+  const [apiKey, setApiKey] = useState<string | null>(initApiKey);
+  const [showKey, setShowKey] = useState(false);
+  const [keyCopied, setKeyCopied] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
+  const [keyPending, startKeyTransition] = useTransition();
+
+  const handleGenerateKey = () => {
+    startKeyTransition(async () => {
+      const newKey = await generateApiKey();
+      setApiKey(newKey);
+      setShowKey(true);
+    });
+  };
+
+  const handleCopyKey = () => {
+    if (!apiKey) return;
+    navigator.clipboard.writeText(apiKey);
+    setKeyCopied(true);
+    setTimeout(() => setKeyCopied(false), 2000);
+  };
+
+  const handleCopyUrl = () => {
+    navigator.clipboard.writeText(mcpServerUrl);
+    setUrlCopied(true);
+    setTimeout(() => setUrlCopied(false), 2000);
+  };
 
   const handleSave = () => {
     startTransition(async () => {
@@ -138,6 +170,80 @@ export function SettingsForm({
       >
         {saved ? <><CheckCircle2 size={18} /> {t('settings.saved')}</> : isPending ? t('common.saving') : t('settings.saveGoals')}
       </button>
+
+      {/* MCP Connection */}
+      <div className="bg-surface border border-border rounded-[20px] p-4 space-y-3.5">
+        <div className="flex items-center gap-2">
+          <Plug size={14} className="text-emerald-400" />
+          <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t('settings.mcpTitle')}</h2>
+        </div>
+        <p className="text-xs text-muted-foreground">{t('settings.mcpDesc')}</p>
+
+        {/* MCP Server URL */}
+        <div>
+          <p className="text-[11px] font-semibold text-muted-foreground mb-1.5">{t('settings.mcpEndpointLabel')}</p>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 bg-surface-2 border border-border rounded-[10px] px-3 py-2 text-xs font-mono text-muted-foreground truncate">
+              {mcpServerUrl}
+            </div>
+            <button
+              type="button"
+              onClick={handleCopyUrl}
+              className="flex items-center justify-center w-8 h-8 rounded-[10px] border border-border bg-surface-2 text-muted-foreground hover:text-primary transition-colors shrink-0"
+            >
+              {urlCopied ? <CheckCircle2 size={14} className="text-primary" /> : <Copy size={14} />}
+            </button>
+          </div>
+        </div>
+
+        {/* API Key */}
+        <div>
+          <p className="text-[11px] font-semibold text-muted-foreground mb-1.5">{t('settings.mcpKeyLabel')}</p>
+          {apiKey ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div
+                  className="flex-1 bg-surface-2 border border-border rounded-[10px] px-3 py-2 text-xs font-mono truncate cursor-pointer select-all"
+                  onClick={() => setShowKey(v => !v)}
+                >
+                  {showKey ? apiKey : `mk_${'•'.repeat(16)}`}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyKey}
+                  className="flex items-center justify-center w-8 h-8 rounded-[10px] border border-border bg-surface-2 text-muted-foreground hover:text-primary transition-colors shrink-0"
+                >
+                  {keyCopied ? <CheckCircle2 size={14} className="text-primary" /> : <Copy size={14} />}
+                </button>
+              </div>
+              <p className="text-[11px] text-muted-foreground/60">{t('settings.mcpHint')}</p>
+              <button
+                type="button"
+                onClick={handleGenerateKey}
+                disabled={keyPending}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-rose-400 transition-colors"
+              >
+                <RefreshCw size={12} className={keyPending ? 'animate-spin' : ''} />
+                {t('settings.mcpRegenerate')}
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground/60">{t('settings.mcpHint')}</p>
+              <button
+                type="button"
+                onClick={handleGenerateKey}
+                disabled={keyPending}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-[12px] text-sm font-semibold transition-all"
+                style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)', color: '#000' }}
+              >
+                <Plug size={14} />
+                {keyPending ? '...' : t('settings.mcpGenerate')}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* More trackers */}
       <div className="bg-surface border border-border rounded-[20px] overflow-hidden">

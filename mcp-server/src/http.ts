@@ -1,14 +1,12 @@
 /**
  * HTTP MCP server for claude.ai remote integration.
  *
- * Uses the MCP SDK's built-in OAuth router (RFC 7591 + PKCE) and
- * StreamableHTTP transport (the protocol claude.ai expects).
+ * Multi-user: each user has a personal API key stored in the mcp_api_keys table.
+ * The OAuth authorize page prompts for that key; the key becomes the bearer token.
+ * verifyAccessToken looks up the key to find the user_id for each request.
  *
- * Required env vars: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
- *                    HEALTH_USER_ID, MCP_ACCESS_TOKEN, BASE_URL
- *
- * BASE_URL must be your Railway public URL, e.g.:
- *   https://reliefitness-mcp-production.up.railway.app
+ * Required env vars: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, BASE_URL
+ * Optional: PORT (default 3001)
  */
 
 import express from 'express';
@@ -30,13 +28,11 @@ import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 const {
   SUPABASE_URL,
   SUPABASE_SERVICE_ROLE_KEY,
-  HEALTH_USER_ID,
-  MCP_ACCESS_TOKEN,
   PORT = '3001',
   BASE_URL,
 } = process.env;
 
-for (const [k, v] of Object.entries({ SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, HEALTH_USER_ID, MCP_ACCESS_TOKEN, BASE_URL })) {
+for (const [k, v] of Object.entries({ SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, BASE_URL })) {
   if (!v) { console.error(`Missing env var: ${k}`); process.exit(1); }
 }
 
@@ -47,10 +43,15 @@ const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!, {
   realtime: { transport: ws as any },
 });
 
-// ── OAuth state (in-memory — fine for personal single-user server) ─────────────
+// ── OAuth state (in-memory — codes expire in 10 min) ─────────────────────────
 
 const registeredClients = new Map<string, OAuthClientInformationFull>();
-const pendingCodes = new Map<string, { challenge: string; clientId: string }>();
+const pendingCodes = new Map<string, {
+  challenge: string;
+  clientId: string;
+  userId: string;
+  apiKey: string;
+}>();
 
 const clientsStore: OAuthRegisteredClientsStore = {
   getClient(clientId) {
@@ -74,38 +75,53 @@ const provider: OAuthServerProvider = {
   get clientsStore(): OAuthRegisteredClientsStore { return clientsStore; },
 
   async authorize(client, params, res) {
-    const code = crypto.randomBytes(16).toString('hex');
-    pendingCodes.set(code, { challenge: params.codeChallenge, clientId: client.client_id });
-    setTimeout(() => pendingCodes.delete(code), 10 * 60 * 1000);
-
-    const cb = new URL(params.redirectUri);
-    cb.searchParams.set('code', code);
-    if (params.state) cb.searchParams.set('state', params.state);
-    const href = cb.toString().replace(/&/g, '&amp;');
+    // Render a form asking the user to enter their personal API key.
+    // The form POSTs to /connect with all OAuth params as hidden fields.
+    const encRedirect = encodeURIComponent(params.redirectUri);
+    const encState = encodeURIComponent(params.state ?? '');
+    const encChallenge = encodeURIComponent(params.codeChallenge);
+    const encClient = encodeURIComponent(client.client_id);
 
     res.send(`<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>RelieFitness · Allow Access</title>
+  <title>RelieFitness · Connect</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:-apple-system,sans-serif;background:#09090f;color:#f5f5f0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-    .card{background:#141419;border:1px solid #1f2028;border-radius:20px;padding:40px 32px;max-width:380px;width:100%;text-align:center}
+    .card{background:#141419;border:1px solid #1f2028;border-radius:20px;padding:40px 32px;max-width:400px;width:100%;text-align:center}
     .icon{font-size:48px;margin-bottom:16px}
     h1{font-size:22px;font-weight:700;margin-bottom:8px}
-    p{color:#6b7280;font-size:14px;line-height:1.6;margin-bottom:28px}
-    .allow{display:inline-block;background:#22c55e;color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;font-weight:600;font-size:15px}
-    .scope{background:#1a2e1a;border:1px solid #22c55e30;border-radius:8px;padding:12px 16px;margin-bottom:24px;font-size:13px;color:#4ade80;text-align:left}
+    p{color:#6b7280;font-size:14px;line-height:1.6;margin-bottom:20px}
+    .scope{background:#1a2e1a;border:1px solid #22c55e30;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:13px;color:#4ade80;text-align:left}
+    label{display:block;text-align:left;font-size:12px;font-weight:600;color:#9ca3af;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+    input[type=text]{width:100%;background:#0d0d12;border:1px solid #2a2a38;border-radius:10px;padding:12px 14px;font-size:14px;color:#f5f5f0;font-family:monospace;margin-bottom:16px;outline:none}
+    input[type=text]:focus{border-color:#22c55e50}
+    .hint{font-size:12px;color:#4b5563;margin-bottom:20px;text-align:left}
+    .hint a{color:#22c55e;text-decoration:none}
+    button{width:100%;background:#22c55e;color:#000;border:none;padding:14px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer}
+    button:hover{background:#16a34a}
+    .err{color:#f87171;font-size:13px;margin-bottom:12px;display:none}
   </style>
 </head>
 <body>
   <div class="card">
     <div class="icon">💪</div>
     <h1>RelieFitness</h1>
-    <p>Claude is requesting access to your health tracking data.</p>
+    <p>Connect Claude to your personal health data.</p>
     <div class="scope">✓ Read meals, weight, workouts, drinks<br>✓ Log new entries<br>✓ Update goals</div>
-    <a href="${href}" class="allow">Allow Access</a>
+    <form method="POST" action="/connect">
+      <input type="hidden" name="redirect_uri" value="${encRedirect}">
+      <input type="hidden" name="state" value="${encState}">
+      <input type="hidden" name="code_challenge" value="${encChallenge}">
+      <input type="hidden" name="client_id" value="${encClient}">
+      <label for="api_key">Your API Key</label>
+      <input type="text" id="api_key" name="api_key" placeholder="mk_xxxxxxxx..." autocomplete="off" spellcheck="false">
+      <p class="hint">Find your key in the RelieFitness app → Settings → MCP Connection</p>
+      <div class="err" id="err"></div>
+      <button type="submit">Connect</button>
+    </form>
   </div>
 </body></html>`);
   },
@@ -121,7 +137,7 @@ const provider: OAuthServerProvider = {
     if (!p) throw new Error('Invalid or expired authorization code');
     pendingCodes.delete(code);
     return {
-      access_token: MCP_ACCESS_TOKEN!,
+      access_token: p.apiKey,
       token_type: 'Bearer',
       expires_in: 31536000,
       scope: 'health:read health:write',
@@ -133,12 +149,20 @@ const provider: OAuthServerProvider = {
   },
 
   async verifyAccessToken(token): Promise<AuthInfo> {
-    if (token !== MCP_ACCESS_TOKEN) throw new Error('Invalid token');
+    const { data, error } = await supabase
+      .from('mcp_api_keys')
+      .select('user_id')
+      .eq('api_key', token)
+      .single();
+
+    if (error || !data) throw new Error('Invalid or revoked API key');
+
     return {
       token,
       clientId: 'reliefitness-client',
       scopes: ['health:read', 'health:write'],
       expiresAt: Math.floor(Date.now() / 1000) + 31536000,
+      extra: { userId: data.user_id },
     };
   },
 };
@@ -147,7 +171,6 @@ const provider: OAuthServerProvider = {
 
 const app = express();
 
-// Trust Railway's reverse proxy so req.protocol returns 'https'
 app.set('trust proxy', true);
 
 app.use(cors({
@@ -160,8 +183,57 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// SDK OAuth router — registers /.well-known/* and /oauth/* endpoints with
-// proper metadata, PKCE, dynamic client registration, and token exchange.
+// ── /connect — validate API key and issue OAuth code ─────────────────────────
+
+app.post('/connect', async (req, res) => {
+  const { api_key, redirect_uri, state, code_challenge, client_id } = req.body as Record<string, string>;
+
+  const redirectUri = decodeURIComponent(redirect_uri ?? '');
+  const decodedState = decodeURIComponent(state ?? '');
+  const challenge = decodeURIComponent(code_challenge ?? '');
+  const clientId = decodeURIComponent(client_id ?? '');
+
+  if (!api_key || !redirectUri || !challenge) {
+    res.status(400).send('Missing required parameters');
+    return;
+  }
+
+  // Validate API key against DB
+  const { data, error } = await supabase
+    .from('mcp_api_keys')
+    .select('user_id')
+    .eq('api_key', api_key.trim())
+    .single();
+
+  if (error || !data) {
+    res.status(400).send(`<!DOCTYPE html><html lang="en">
+<head><meta charset="UTF-8"><title>Invalid Key</title>
+<style>body{font-family:-apple-system,sans-serif;background:#09090f;color:#f5f5f0;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+.card{background:#141419;border:1px solid #3f1313;border-radius:20px;padding:40px 32px;max-width:400px;width:100%;text-align:center}
+h1{color:#f87171;font-size:20px;margin-bottom:12px}.back{display:inline-block;margin-top:20px;color:#22c55e;text-decoration:none;font-size:14px}</style>
+</head><body><div class="card"><h1>Invalid API Key</h1>
+<p style="color:#9ca3af;font-size:14px">That key doesn't match any RelieFitness account. Please check your key in Settings → MCP Connection.</p>
+<a class="back" href="javascript:history.back()">← Try again</a></div></body></html>`);
+    return;
+  }
+
+  const code = crypto.randomBytes(16).toString('hex');
+  pendingCodes.set(code, {
+    challenge,
+    clientId,
+    userId: data.user_id,
+    apiKey: api_key.trim(),
+  });
+  setTimeout(() => pendingCodes.delete(code), 10 * 60 * 1000);
+
+  const cb = new URL(redirectUri);
+  cb.searchParams.set('code', code);
+  if (decodedState) cb.searchParams.set('state', decodedState);
+  res.redirect(cb.toString());
+});
+
+// ── OAuth router — registers /.well-known/* and /oauth/* ─────────────────────
+
 const issuerUrl = new URL(BASE_URL!);
 app.use(mcpAuthRouter({ provider, issuerUrl }));
 
@@ -175,13 +247,20 @@ const bearerAuth = requireBearerAuth({
 });
 
 async function mcpHandler(req: express.Request, res: express.Response): Promise<void> {
+  const authInfo = res.locals.auth as AuthInfo | undefined;
+  const userId = authInfo?.extra?.userId as string | undefined;
+
+  if (!userId) {
+    res.status(401).json({ error: 'Unable to determine user identity' });
+    return;
+  }
+
   const sessionId = req.headers['mcp-session-id'] as string | undefined;
   let transport: StreamableHTTPServerTransport;
 
   if (sessionId && transports.has(sessionId)) {
     transport = transports.get(sessionId)!;
   } else if (req.method === 'POST' && !sessionId) {
-    // New session — create transport and connect MCP server
     transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => crypto.randomBytes(16).toString('hex'),
       onsessioninitialized: (id) => { transports.set(id, transport); },
@@ -189,7 +268,7 @@ async function mcpHandler(req: express.Request, res: express.Response): Promise<
     transport.onclose = () => {
       if (transport.sessionId) transports.delete(transport.sessionId);
     };
-    const mcpServer = createMcpServer(supabase, HEALTH_USER_ID!);
+    const mcpServer = createMcpServer(supabase, userId);
     await mcpServer.connect(transport);
   } else {
     res.status(404).json({ error: 'Session not found or invalid request' });
@@ -199,7 +278,6 @@ async function mcpHandler(req: express.Request, res: express.Response): Promise<
   await transport.handleRequest(req, res, req.body);
 }
 
-// Handle MCP at root (user enters Railway URL directly) and /mcp
 for (const path of ['/', '/mcp']) {
   app.post(path, bearerAuth, mcpHandler);
   app.get(path, bearerAuth, mcpHandler);

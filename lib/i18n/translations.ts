@@ -344,6 +344,14 @@ export const translations = {
     // ── Settings extras ──
     'settings.waterGoal': 'Daily water goal',
     'settings.moreTrackers': 'More trackers',
+    'settings.mcpTitle': 'MCP Connection',
+    'settings.mcpDesc': 'Connect Claude AI to your personal health data.',
+    'settings.mcpKeyLabel': 'Your API Key',
+    'settings.mcpEndpointLabel': 'MCP Server URL',
+    'settings.mcpGenerate': 'Generate API Key',
+    'settings.mcpRegenerate': 'Regenerate Key',
+    'settings.mcpCopied': 'Copied!',
+    'settings.mcpHint': 'Paste this key when connecting Claude to RelieFitness MCP.',
 
     // ── Stats extras ──
     'stats.streak': 'Day streak',
@@ -693,6 +701,14 @@ export const translations = {
     // ── Settings extras ──
     'settings.waterGoal': 'יעד מים יומי',
     'settings.moreTrackers': 'מעקבים נוספים',
+    'settings.mcpTitle': 'חיבור MCP',
+    'settings.mcpDesc': 'חבר את Claude AI לנתוני הבריאות האישיים שלך.',
+    'settings.mcpKeyLabel': 'מפתח API שלך',
+    'settings.mcpEndpointLabel': 'כתובת שרת MCP',
+    'settings.mcpGenerate': 'צור מפתח API',
+    'settings.mcpRegenerate': 'צור מפתח חדש',
+    'settings.mcpCopied': 'הועתק!',
+    'settings.mcpHint': 'הדבק מפתח זה בעת חיבור Claude ל-RelieFitness MCP.',
 
     // ── Stats extras ──
     'stats.streak': 'רצף ימים',

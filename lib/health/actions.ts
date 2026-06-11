@@ -242,6 +242,25 @@ export async function deleteMeasurement(id: string) {
   revalidatePath('/measurements');
 }
 
+export async function generateApiKey(): Promise<string> {
+  const supabase = createClient() as any;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  // Delete any existing key, then insert a fresh DB-generated one
+  await supabase.from('mcp_api_keys').delete().eq('user_id', user.id);
+
+  const { data, error } = await supabase
+    .from('mcp_api_keys')
+    .insert({ user_id: user.id })
+    .select('api_key')
+    .single();
+
+  if (error) throw error;
+  revalidatePath('/settings');
+  return data.api_key as string;
+}
+
 export async function logSteps(steps: number) {
   const supabase = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
