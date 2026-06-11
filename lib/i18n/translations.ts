@@ -351,7 +351,13 @@ export const translations = {
     'settings.mcpGenerate': 'Generate API Key',
     'settings.mcpRegenerate': 'Regenerate Key',
     'settings.mcpCopied': 'Copied!',
-    'settings.mcpHint': 'Paste this key when connecting Claude to RelieFitness MCP.',
+    'settings.mcpHint': 'Paste this key when connecting Claude or ChatGPT to RelieFitness.',
+    'settings.gptTitle': 'ChatGPT Setup',
+    'settings.gptStep1': '1. Go to ChatGPT → Explore GPTs → Create',
+    'settings.gptStep2': '2. Configure → Actions → Import from URL',
+    'settings.gptStep3': '3. Paste your OpenAPI spec URL (below)',
+    'settings.gptStep4': '4. Set auth: API Key → Bearer → paste your key above',
+    'settings.gptSpecLabel': 'OpenAPI Spec URL',
 
     // ── Stats extras ──
     'stats.streak': 'Day streak',
@@ -708,7 +714,13 @@ export const translations = {
     'settings.mcpGenerate': 'צור מפתח API',
     'settings.mcpRegenerate': 'צור מפתח חדש',
     'settings.mcpCopied': 'הועתק!',
-    'settings.mcpHint': 'הדבק מפתח זה בעת חיבור Claude ל-RelieFitness MCP.',
+    'settings.mcpHint': 'הדבק מפתח זה בעת חיבור Claude או ChatGPT ל-RelieFitness.',
+    'settings.gptTitle': 'הגדרת ChatGPT',
+    'settings.gptStep1': '1. עבור ל-ChatGPT → Explore GPTs → Create',
+    'settings.gptStep2': '2. Configure → Actions → Import from URL',
+    'settings.gptStep3': '3. הדבק את כתובת ה-OpenAPI Spec (למטה)',
+    'settings.gptStep4': '4. הגדר אימות: API Key → Bearer → הדבק את המפתח שלמעלה',
+    'settings.gptSpecLabel': 'כתובת OpenAPI Spec',
 
     // ── Stats extras ──
     'stats.streak': 'רצף ימים',

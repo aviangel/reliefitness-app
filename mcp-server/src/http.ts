@@ -15,6 +15,7 @@ import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
 import { createMcpServer } from './server.js';
+import { createRestRouter, buildOpenApiSpec } from './rest.js';
 import { mcpAuthRouter } from '@modelcontextprotocol/sdk/server/auth/router.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { requireBearerAuth } from '@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js';
@@ -287,6 +288,16 @@ for (const path of ['/', '/mcp']) {
     res.status(200).json({ ok: true });
   });
 }
+
+// ── REST API (for GPT Custom Actions and other non-MCP clients) ───────────────
+
+app.use('/api', createRestRouter(supabase));
+
+// ── OpenAPI spec (for GPT Actions setup) ─────────────────────────────────────
+
+app.get('/openapi.json', (_req, res) => {
+  res.json(buildOpenApiSpec(BASE_URL!));
+});
 
 // ── Health check ──────────────────────────────────────────────────────────────
 

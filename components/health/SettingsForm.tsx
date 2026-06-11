@@ -9,7 +9,7 @@ import { useI18n } from '@/lib/i18n/context';
 import type { TranslationKey } from '@/lib/i18n/translations';
 import { LanguageToggle } from './LanguageToggle';
 import { ThemeToggle } from './ThemeToggle';
-import { CheckCircle2, LogOut, Moon, Ruler, Footprints, AlertTriangle, ChevronRight, Copy, RefreshCw, Plug } from 'lucide-react';
+import { CheckCircle2, LogOut, Moon, Ruler, Footprints, AlertTriangle, ChevronRight, Copy, RefreshCw, Plug, Bot } from 'lucide-react';
 
 interface SettingsFormProps {
   calorieGoal: number;
@@ -54,7 +54,9 @@ export function SettingsForm({
   const [showKey, setShowKey] = useState(false);
   const [keyCopied, setKeyCopied] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
+  const [specCopied, setSpecCopied] = useState(false);
   const [keyPending, startKeyTransition] = useTransition();
+  const openApiSpecUrl = `${mcpServerUrl}/openapi.json`;
 
   const handleGenerateKey = () => {
     startKeyTransition(async () => {
@@ -75,6 +77,12 @@ export function SettingsForm({
     navigator.clipboard.writeText(mcpServerUrl);
     setUrlCopied(true);
     setTimeout(() => setUrlCopied(false), 2000);
+  };
+
+  const handleCopySpec = () => {
+    navigator.clipboard.writeText(openApiSpecUrl);
+    setSpecCopied(true);
+    setTimeout(() => setSpecCopied(false), 2000);
   };
 
   const handleSave = () => {
@@ -242,6 +250,37 @@ export function SettingsForm({
               </button>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* ChatGPT Setup */}
+      <div className="bg-surface border border-border rounded-[20px] p-4 space-y-3.5">
+        <div className="flex items-center gap-2">
+          <Bot size={14} className="text-sky-400" />
+          <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t('settings.gptTitle')}</h2>
+        </div>
+
+        <div className="space-y-1.5 text-xs text-muted-foreground">
+          <p>{t('settings.gptStep1')}</p>
+          <p>{t('settings.gptStep2')}</p>
+          <p>{t('settings.gptStep3')}</p>
+          <p>{t('settings.gptStep4')}</p>
+        </div>
+
+        <div>
+          <p className="text-[11px] font-semibold text-muted-foreground mb-1.5">{t('settings.gptSpecLabel')}</p>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 bg-surface-2 border border-border rounded-[10px] px-3 py-2 text-xs font-mono text-muted-foreground truncate">
+              {openApiSpecUrl}
+            </div>
+            <button
+              type="button"
+              onClick={handleCopySpec}
+              className="flex items-center justify-center w-8 h-8 rounded-[10px] border border-border bg-surface-2 text-muted-foreground hover:text-sky-400 transition-colors shrink-0"
+            >
+              {specCopied ? <CheckCircle2 size={14} className="text-sky-400" /> : <Copy size={14} />}
+            </button>
+          </div>
         </div>
       </div>
 
