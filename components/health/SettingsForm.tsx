@@ -2,14 +2,14 @@
 
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
-import { updateGoals, generateApiKey } from '@/lib/health/actions';
+import { updateGoals, generateApiKey, updateBuddySettings } from '@/lib/health/actions';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useI18n } from '@/lib/i18n/context';
 import type { TranslationKey } from '@/lib/i18n/translations';
 import { LanguageToggle } from './LanguageToggle';
 import { ThemeToggle } from './ThemeToggle';
-import { CheckCircle2, LogOut, Moon, Ruler, Footprints, AlertTriangle, ChevronRight, Copy, RefreshCw, Plug, Bot, ListChecks, PawPrint, ShoppingBag } from 'lucide-react';
+import { CheckCircle2, LogOut, Moon, Ruler, Footprints, AlertTriangle, ChevronRight, Copy, RefreshCw, Plug, Bot, ListChecks, PawPrint, ShoppingBag, Heart } from 'lucide-react';
 
 interface SettingsFormProps {
   calorieGoal: number;
@@ -23,6 +23,10 @@ interface SettingsFormProps {
   userId: string;
   initApiKey: string | null;
   mcpServerUrl: string;
+  buddyReminders: boolean;
+  buddyFood: boolean;
+  buddyWater: boolean;
+  buddyHabits: boolean;
 }
 
 export function SettingsForm({
@@ -36,6 +40,10 @@ export function SettingsForm({
   targetWeight,
   initApiKey,
   mcpServerUrl,
+  buddyReminders: initBuddyReminders,
+  buddyFood: initBuddyFood,
+  buddyWater: initBuddyWater,
+  buddyHabits: initBuddyHabits,
 }: SettingsFormProps) {
   const { t } = useI18n();
   const [calGoal, setCalGoal] = useState(initCal.toString());
@@ -56,6 +64,23 @@ export function SettingsForm({
   const [urlCopied, setUrlCopied] = useState(false);
   const [specCopied, setSpecCopied] = useState(false);
   const [keyPending, startKeyTransition] = useTransition();
+
+  // Buddy settings state
+  const [buddyReminders, setBuddyReminders] = useState(initBuddyReminders);
+  const [buddyFood, setBuddyFood]   = useState(initBuddyFood);
+  const [buddyWater, setBuddyWater] = useState(initBuddyWater);
+  const [buddyHabits, setBuddyHabits] = useState(initBuddyHabits);
+  const [buddyPending, startBuddyTransition] = useTransition();
+
+  const handleBuddyToggle = (field: 'buddy_reminders' | 'buddy_food_nudges' | 'buddy_water_nudges' | 'buddy_habit_nudges', value: boolean) => {
+    if (field === 'buddy_reminders')   setBuddyReminders(value);
+    if (field === 'buddy_food_nudges') setBuddyFood(value);
+    if (field === 'buddy_water_nudges') setBuddyWater(value);
+    if (field === 'buddy_habit_nudges') setBuddyHabits(value);
+    startBuddyTransition(async () => {
+      await updateBuddySettings({ [field]: value });
+    });
+  };
   const openApiSpecUrl = `${mcpServerUrl}/openapi.json`;
 
   const handleGenerateKey = () => {
@@ -101,9 +126,7 @@ export function SettingsForm({
   };
 
   const moreLinks: { href: string; labelKey: TranslationKey; icon: typeof Moon; color: string }[] = [
-    { href: '/habits', labelKey: 'habits.title', icon: ListChecks, color: 'text-emerald-400' },
     { href: '/pet', labelKey: 'pet.title', icon: PawPrint, color: 'text-amber-400' },
-    { href: '/shop', labelKey: 'shop.title', icon: ShoppingBag, color: 'text-fuchsia-400' },
     { href: '/sleep', labelKey: 'sleep.title', icon: Moon, color: 'text-indigo-400' },
     { href: '/measurements', labelKey: 'meas.title', icon: Ruler, color: 'text-teal-400' },
     { href: '/steps', labelKey: 'steps.title', icon: Footprints, color: 'text-lime-400' },
@@ -285,6 +308,36 @@ export function SettingsForm({
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Living Buddy toggles */}
+      <div className="bg-surface border border-border rounded-[20px] p-4 space-y-3.5">
+        <div className="flex items-center gap-2">
+          <Heart size={14} className="text-pink-400" />
+          <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t('settings.buddyTitle')}</h2>
+        </div>
+        <p className="text-xs text-muted-foreground">{t('settings.buddySubtitle')}</p>
+
+        {([
+          { label: t('settings.buddyReminders'), value: buddyReminders, field: 'buddy_reminders' as const },
+          { label: t('settings.buddyFood'),      value: buddyFood,      field: 'buddy_food_nudges' as const, disabled: !buddyReminders },
+          { label: t('settings.buddyWater'),     value: buddyWater,     field: 'buddy_water_nudges' as const, disabled: !buddyReminders },
+          { label: t('settings.buddyHabits'),    value: buddyHabits,    field: 'buddy_habit_nudges' as const, disabled: !buddyReminders },
+        ]).map(({ label, value, field, disabled }) => (
+          <div key={field} className={`flex items-center justify-between ${disabled ? 'opacity-40 pointer-events-none' : ''}`}>
+            <span className="text-sm font-medium">{label}</span>
+            <button
+              type="button"
+              disabled={buddyPending || disabled}
+              onClick={() => handleBuddyToggle(field, !value)}
+              className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${value ? 'bg-primary' : 'bg-surface-2 border border-border'}`}
+            >
+              <span
+                className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${value ? 'translate-x-[22px]' : 'translate-x-0.5'}`}
+              />
+            </button>
+          </div>
+        ))}
       </div>
 
       {/* More trackers */}

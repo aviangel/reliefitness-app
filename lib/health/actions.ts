@@ -261,6 +261,24 @@ export async function generateApiKey(): Promise<string> {
   return data.api_key as string;
 }
 
+export async function updateBuddySettings(settings: {
+  buddy_reminders?: boolean;
+  buddy_food_nudges?: boolean;
+  buddy_water_nudges?: boolean;
+  buddy_habit_nudges?: boolean;
+}) {
+  const supabase = createClient() as any;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  await supabase.from('user_profile').upsert(
+    { user_id: user.id, ...settings, updated_at: new Date().toISOString() },
+    { onConflict: 'user_id' }
+  );
+  revalidatePath('/settings');
+  revalidatePath('/home');
+}
+
 export async function logSteps(steps: number) {
   const supabase = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();

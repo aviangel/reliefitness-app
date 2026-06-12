@@ -25,6 +25,28 @@ export const translations = {
     'nav.workout': 'Workout',
     'nav.drinks': 'Drinks',
     'nav.weight': 'Weight',
+    'nav.habits': 'Habits',
+    'nav.shop': 'Shop',
+    'nav.settings': 'Settings',
+
+    // ── Home ──
+    'home.calories': 'Calories',
+    'home.water': 'Water',
+    'home.habitsLabel': 'Habits',
+    'home.habitsToday': 'today',
+    'home.ofGoal': 'of {n}',
+    'home.logFood': 'Log Food',
+    'home.logWater': '+250ml Water',
+    'home.habitsMark': 'Mark Habit',
+    'home.moreTrackers': 'More trackers',
+
+    // ── Buddy settings ──
+    'settings.buddyTitle': 'Living Buddy',
+    'settings.buddySubtitle': 'Nudges and reminders from your buddy',
+    'settings.buddyReminders': 'Buddy reminders',
+    'settings.buddyFood': 'Food & meal nudges',
+    'settings.buddyWater': 'Water reminders',
+    'settings.buddyHabits': 'Habit reminders',
 
     // ── Meal types ──
     'meal.breakfast': 'Breakfast',
@@ -436,6 +458,28 @@ export const translations = {
     'nav.workout': 'אימון',
     'nav.drinks': 'שתייה',
     'nav.weight': 'משקל',
+    'nav.habits': 'הרגלים',
+    'nav.shop': 'חנות',
+    'nav.settings': 'הגדרות',
+
+    // ── Home ──
+    'home.calories': 'קלוריות',
+    'home.water': 'מים',
+    'home.habitsLabel': 'הרגלים',
+    'home.habitsToday': 'היום',
+    'home.ofGoal': 'מתוך {n}',
+    'home.logFood': 'תעד אוכל',
+    'home.logWater': '+250 מ״ל מים',
+    'home.habitsMark': 'סמן הרגל',
+    'home.moreTrackers': 'עוד מעקבים',
+
+    // ── Buddy settings ──
+    'settings.buddyTitle': 'החבר החי',
+    'settings.buddySubtitle': 'תזכורות ועדכונים מהחבר שלך',
+    'settings.buddyReminders': 'תזכורות חבר',
+    'settings.buddyFood': 'תזכורות אוכל',
+    'settings.buddyWater': 'תזכורות מים',
+    'settings.buddyHabits': 'תזכורות הרגלים',
 
     // ── Meal types ──
     'meal.breakfast': 'ארוחת בוקר',

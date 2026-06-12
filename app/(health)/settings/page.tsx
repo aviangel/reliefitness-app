@@ -18,6 +18,10 @@ type ProfileRow = {
   water_goal_ml: number;
   current_weight_kg: number;
   target_weight_kg: number;
+  buddy_reminders: boolean;
+  buddy_food_nudges: boolean;
+  buddy_water_nudges: boolean;
+  buddy_habit_nudges: boolean;
 };
 
 export default async function SettingsPage() {
@@ -52,6 +56,10 @@ export default async function SettingsPage() {
         userId={user.id}
         initApiKey={(mcpKeyData as any)?.api_key ?? null}
         mcpServerUrl={MCP_SERVER_URL}
+        buddyReminders={(p as any).buddy_reminders !== false}
+        buddyFood={(p as any).buddy_food_nudges !== false}
+        buddyWater={(p as any).buddy_water_nudges !== false}
+        buddyHabits={(p as any).buddy_habit_nudges !== false}
       />
     </ScrollShell>
   );
