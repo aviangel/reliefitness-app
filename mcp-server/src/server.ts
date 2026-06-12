@@ -453,6 +453,32 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
         },
       },
       {
+        name: 'get_habits',
+        description:
+          "Get the user's self-care habit tracker for the current week (Sunday-based): each active habit with its schedule, which days were completed (✓), missed (✗), or unscheduled (—), plus weekly completion counts.",
+        inputSchema: { type: 'object', properties: {}, required: [] },
+      },
+      {
+        name: 'log_habit',
+        description:
+          'Mark a habit as done (or undo it) for a date. Awards points (capped daily). Use get_habits first to see active habit slugs.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            habit_slug: { type: 'string', description: 'e.g. brush_teeth, vitamins, tidy_room.' },
+            date: { type: 'string', description: 'YYYY-MM-DD. Omit for today.' },
+            undo: { type: 'boolean', description: 'True to un-mark a completion.' },
+          },
+          required: ['habit_slug'],
+        },
+      },
+      {
+        name: 'get_rewards',
+        description:
+          "Get the user's points balance, lifetime points, deficit-week streak, active pet, and whether last week's calorie-deficit reward is claimable. The weekly deficit is the main points source — habits are a small bonus.",
+        inputSchema: { type: 'object', properties: {}, required: [] },
+      },
+      {
         name: 'get_calorie_history',
         description:
           'Daily calorie history with TDEE comparison. Returns deficit/maintenance/surplus status, total calories, and delta vs maintenance for each day. Use this to monitor weight-loss progress, spot problem days, and decide whether to adjust the calorie goal.',
@@ -1197,6 +1223,112 @@ export function createMcpServer(supabase: SupabaseClient, userId: string): Serve
             });
           }
           return { content: [{ type: 'text', text: JSON.stringify({ period_weeks: weeks, planned_days_per_cycle: plannedDays || null, total_completed: sessions.length, weekly, ready_to_progress: readyChecks }, null, 2) }] };
+        }
+
+        case 'get_habits': {
+          const now = new Date();
+          const start = new Date(now); start.setHours(0, 0, 0, 0);
+          start.setDate(start.getDate() - start.getDay()); // Sunday
+          const weekDates = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(start); d.setDate(start.getDate() + i);
+            return d.toISOString().split('T')[0];
+          });
+          const [{ data: userHabits }, { data: defs }, { data: logs }] = await Promise.all([
+            supabase.from('user_habits').select('habit_slug,schedule_days,times_per_week').eq('user_id', userId),
+            supabase.from('habit_definitions').select('slug,name_en,category,emoji'),
+            supabase.from('habit_log').select('habit_slug,date').eq('user_id', userId).gte('date', weekDates[0]).lte('date', weekDates[6]),
+          ]);
+          const defBySlug = new Map((defs ?? []).map((d: any) => [d.slug, d]));
+          const doneSet = new Set((logs ?? []).map((l: any) => `${l.habit_slug}|${l.date}`));
+          const todayStr = today();
+          const habits = (userHabits ?? []).map((h: any) => {
+            const def = defBySlug.get(h.habit_slug) as any;
+            const countMode = h.times_per_week != null;
+            const week = weekDates.map((d, i) => {
+              const done = doneSet.has(`${h.habit_slug}|${d}`);
+              const scheduled = countMode || (h.schedule_days ?? []).includes(i);
+              const past = d < todayStr;
+              return { date: d, status: done ? 'done' : !scheduled ? 'unscheduled' : past ? 'missed' : 'pending' };
+            });
+            const doneCount = week.filter((w) => w.status === 'done').length;
+            const required = countMode ? h.times_per_week : (h.schedule_days ?? []).length;
+            return {
+              habit_slug: h.habit_slug, name: def?.name_en ?? h.habit_slug,
+              category: def?.category, emoji: def?.emoji,
+              schedule: countMode ? `${h.times_per_week}x per week` : `days ${(h.schedule_days ?? []).join(',')} (0=Sun)`,
+              week, done_this_week: doneCount, required_this_week: required,
+              goal_met: doneCount >= required,
+            };
+          });
+          return { content: [{ type: 'text', text: JSON.stringify({ week_start: weekDates[0], habits, available_slugs: (defs ?? []).map((d: any) => d.slug) }, null, 2) }] };
+        }
+
+        case 'log_habit': {
+          const slug = String(a.habit_slug ?? '').trim();
+          const d = (a.date as string) ?? today();
+          const { data: def } = await supabase.from('habit_definitions').select('slug').eq('slug', slug).maybeSingle();
+          if (!def) return { content: [{ type: 'text', text: `Unknown habit slug: "${slug}". Use get_habits to see available slugs.` }], isError: true };
+
+          const { data: existing } = await supabase.from('habit_log').select('id').eq('user_id', userId).eq('habit_slug', slug).eq('date', d).maybeSingle();
+
+          if (a.undo) {
+            if (!existing) return { content: [{ type: 'text', text: `"${slug}" was not marked done on ${d}.` }] };
+            await supabase.from('habit_log').delete().eq('id', (existing as any).id);
+            const { data: ledger } = await supabase.from('points_ledger').select('id,points').eq('user_id', userId).eq('reason', 'habit').eq('ref_date', d).eq('meta->>habit_slug', slug).maybeSingle();
+            if (ledger) {
+              await supabase.from('points_ledger').delete().eq('id', (ledger as any).id);
+              const { data: up } = await supabase.from('user_points').select('balance').eq('user_id', userId).maybeSingle();
+              if (up) await supabase.from('user_points').update({ balance: Math.max(0, (up as any).balance - (ledger as any).points) }).eq('user_id', userId);
+            }
+            return { content: [{ type: 'text', text: `Unmarked "${slug}" for ${d}.` }] };
+          }
+
+          if (existing) return { content: [{ type: 'text', text: `"${slug}" already marked done on ${d}.` }] };
+          await supabase.from('habit_log').insert({ user_id: userId, habit_slug: slug, date: d });
+
+          // Points: 10 per habit, capped at 50/day
+          const { data: todayLedger } = await supabase.from('points_ledger').select('points').eq('user_id', userId).eq('reason', 'habit').eq('ref_date', d);
+          const earnedToday = (todayLedger ?? []).reduce((s: number, r: any) => s + r.points, 0);
+          const award = Math.max(0, Math.min(10, 50 - earnedToday));
+          if (award > 0) {
+            await supabase.from('points_ledger').insert({ user_id: userId, points: award, reason: 'habit', ref_date: d, meta: { habit_slug: slug } });
+            const { data: up } = await supabase.from('user_points').select('balance,lifetime').eq('user_id', userId).maybeSingle();
+            if (up) await supabase.from('user_points').update({ balance: (up as any).balance + award, lifetime: (up as any).lifetime + award }).eq('user_id', userId);
+            else await supabase.from('user_points').insert({ user_id: userId, balance: award, lifetime: award });
+          }
+          return { content: [{ type: 'text', text: JSON.stringify({ logged: true, habit: slug, date: d, points_awarded: award }, null, 2) }] };
+        }
+
+        case 'get_rewards': {
+          const [{ data: points }, { data: state }] = await Promise.all([
+            supabase.from('user_points').select('balance,lifetime,deficit_week_streak,last_deficit_week').eq('user_id', userId).maybeSingle(),
+            supabase.from('user_pet_state').select('active_pet_slug,pet_name,variant,equipped_items').eq('user_id', userId).maybeSingle(),
+          ]);
+          // Last completed week (Sunday-based)
+          const now = new Date();
+          const thisWeek = new Date(now); thisWeek.setHours(0, 0, 0, 0);
+          thisWeek.setDate(thisWeek.getDate() - thisWeek.getDay());
+          const start = new Date(thisWeek); start.setDate(thisWeek.getDate() - 7);
+          const end = new Date(thisWeek); end.setDate(thisWeek.getDate() - 1);
+          const startStr = start.toISOString().split('T')[0];
+          const endStr = end.toISOString().split('T')[0];
+          const { data: weekRows } = await supabase.from('daily_calorie_status').select('status').eq('user_id', userId).gte('date', startStr).lte('date', endStr);
+          const days = (weekRows ?? []) as any[];
+          const deficitDays = days.filter((r) => r.status === 'deficit').length;
+          const surplusDays = days.filter((r) => r.status === 'surplus').length;
+          const alreadyClaimed = (points as any)?.last_deficit_week === startStr;
+          const eligible = !alreadyClaimed && days.length >= 5 && surplusDays === 0 && deficitDays >= 4;
+          return {
+            content: [{
+              type: 'text', text: JSON.stringify({
+                points: { balance: (points as any)?.balance ?? 0, lifetime: (points as any)?.lifetime ?? 0 },
+                deficit_week_streak: (points as any)?.deficit_week_streak ?? 0,
+                pet: state ? { slug: (state as any).active_pet_slug, name: (state as any).pet_name, variant: (state as any).variant, equipped: (state as any).equipped_items } : null,
+                last_week: { start: startStr, end: endStr, days_logged: days.length, deficit_days: deficitDays, surplus_days: surplusDays },
+                weekly_reward: { eligible, already_claimed: alreadyClaimed, note: 'User claims the reward in the app on the My Buddy page.' },
+              }, null, 2),
+            }],
+          };
         }
 
         case 'get_calorie_history': {

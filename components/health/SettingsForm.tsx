@@ -9,7 +9,7 @@ import { useI18n } from '@/lib/i18n/context';
 import type { TranslationKey } from '@/lib/i18n/translations';
 import { LanguageToggle } from './LanguageToggle';
 import { ThemeToggle } from './ThemeToggle';
-import { CheckCircle2, LogOut, Moon, Ruler, Footprints, AlertTriangle, ChevronRight, Copy, RefreshCw, Plug, Bot } from 'lucide-react';
+import { CheckCircle2, LogOut, Moon, Ruler, Footprints, AlertTriangle, ChevronRight, Copy, RefreshCw, Plug, Bot, ListChecks, PawPrint, ShoppingBag } from 'lucide-react';
 
 interface SettingsFormProps {
   calorieGoal: number;
@@ -101,6 +101,9 @@ export function SettingsForm({
   };
 
   const moreLinks: { href: string; labelKey: TranslationKey; icon: typeof Moon; color: string }[] = [
+    { href: '/habits', labelKey: 'habits.title', icon: ListChecks, color: 'text-emerald-400' },
+    { href: '/pet', labelKey: 'pet.title', icon: PawPrint, color: 'text-amber-400' },
+    { href: '/shop', labelKey: 'shop.title', icon: ShoppingBag, color: 'text-fuchsia-400' },
     { href: '/sleep', labelKey: 'sleep.title', icon: Moon, color: 'text-indigo-400' },
     { href: '/measurements', labelKey: 'meas.title', icon: Ruler, color: 'text-teal-400' },
     { href: '/steps', labelKey: 'steps.title', icon: Footprints, color: 'text-lime-400' },
